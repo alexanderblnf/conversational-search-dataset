@@ -1,5 +1,6 @@
 from csearch.converters.xml2pandas import XML2Pandas
 from csearch.converters.pandas2json import Pandas2JSON
+import pandas as pd
 import json
 
 
@@ -14,36 +15,80 @@ class StackExchangeJSONBuilder:
         posts_df = XML2Pandas(self.__root_folder + '/Posts.xml').convert()
         comments_df = XML2Pandas(self.__root_folder + '/Comments.xml').convert()
         votes_df = XML2Pandas(self.__root_folder + '/Votes.xml').convert()
-        spam_votes_df = votes_df.loc[votes_df['VoteTypeId'].isin(['4', '5'])]
+        users_df = XML2Pandas(self.__root_folder + '/Users.xml').convert()
+        spam_votes_df = votes_df.loc[votes_df['VoteTypeId'].isin(['4', '12'])].copy()
+
+        # Convert necessary columns to numeric
+        posts_df['Id'] = pd.to_numeric(posts_df['Id'])
+        posts_df['OwnerUserId'] = pd.to_numeric(posts_df['OwnerUserId'])
+        posts_df['ParentId'] = pd.to_numeric(posts_df['ParentId'])
+
+        comments_df['Id'] = pd.to_numeric(comments_df['Id'])
+        comments_df['PostId'] = pd.to_numeric(comments_df['PostId'])
+        comments_df['UserId'] = pd.to_numeric(comments_df['UserId'])
+
+        users_df['Id'] = pd.to_numeric(users_df['Id'])
+        spam_votes_df['PostId'] = pd.to_numeric(spam_votes_df['PostId'])
 
         print('Merging the information...')
-        posts_comments_df = posts_df.merge(
-            comments_df,
+        posts_df = posts_df.loc[~posts_df['OwnerUserId'].isnull()]
+
+        filtered_posts_df = pd.merge(
+            posts_df,
+            spam_votes_df,
             how='left',
             left_on='Id',
             right_on='PostId',
-            suffixes=('_post', '_comment')
+            suffixes=('_post', '_votes')
         )
-        final_df = posts_comments_df.merge(
-            spam_votes_df,
+        filtered_posts_df = filtered_posts_df.loc[filtered_posts_df['PostId'].isnull()]
+
+        columns = ['AcceptedAnswerId', 'Body', 'CreationDate_post', 'Id_post', 'OwnerUserId', 'ParentId', 'PostTypeId',
+                   'Score', 'Title']
+        filtered_posts_df = filtered_posts_df[columns]
+
+        posts_users_df = pd.merge(
+            filtered_posts_df,
+            users_df,
+            how='left',
+            left_on='OwnerUserId',
+            right_on='Id',
+            suffixes=('_post', '_user')
+        )
+
+        columns = ['AcceptedAnswerId', 'Body', 'CreationDate_post', 'Id_post', 'OwnerUserId', 'ParentId', 'PostTypeId',
+                   'Score', 'Title', 'DisplayName']
+        posts_users_df = posts_users_df[columns]
+
+        comments_users_df = pd.merge(
+            comments_df,
+            users_df,
+            how='left',
+            left_on='UserId',
+            right_on='Id',
+            suffixes=('_comment', '_user')
+        )
+
+        columns = ['CreationDate_comment', 'Id_comment', 'PostId', 'Score', 'Text', 'UserId', 'DisplayName']
+        comments_users_df = comments_users_df[columns]
+
+        final_df = pd.merge(
+            posts_users_df,
+            comments_users_df,
             how='left',
             left_on='Id_post',
             right_on='PostId',
-            suffixes=('_comments', '_votes')
+            suffixes=('_post', '_comment')
         )
 
-        # Filter out spam posts
-        final_df = final_df.loc[final_df['PostId_votes'].isnull()]
+        columns = ['AcceptedAnswerId', 'Body', 'CreationDate_post', 'Id_post', 'OwnerUserId', 'ParentId', 'PostTypeId',
+                   'Score_post', 'Title', 'DisplayName_post', 'CreationDate_comment', 'Id_comment', 'Score_comment',
+                   'Text', 'UserId', 'DisplayName_comment']
+        filtered_df = final_df[columns]
+        filtered_df = filtered_df.reset_index(drop=True)
 
-        required_columns = [
-            'AcceptedAnswerId', 'AnswerCount', 'Body', 'CreationDate_post', 'CreationDate_comment',
-            'FavoriteCount', 'Id_post', 'Id_comment', 'OwnerUserId', 'ParentId', 'PostTypeId',
-            'Score_comment', 'Score_post', 'Tags', 'Text', 'Title', 'UserId_comments'
-        ]
-
-        # Leave only columns that are useful
-        filtered_df = final_df[required_columns]
-        filtered_df = filtered_df.reset_index()
+        # Sort by post creation date and then by comment
+        filtered_df = filtered_df.sort_values(by=['CreationDate_post', 'CreationDate_comment'])
 
         return filtered_df
 
