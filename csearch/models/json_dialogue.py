@@ -87,7 +87,7 @@ class JsonDialogue:
                 'user_name': utterance['DisplayName_comment'],
                 'user_id': utterance['UserId'],
                 'votes': utterance['Score_comment'],
-                'id': utterance['Id_post'] + utterance['Id_comment'],
+                'id': str(utterance['Id_post']) + '-' + str(utterance['Id_comment']),
                 'is_answer': 0
             }
 
@@ -99,7 +99,7 @@ class JsonDialogue:
             'user_name': utterance['DisplayName_post'],
             'user_id': utterance['OwnerUserId'],
             'votes': utterance['Score_post'],
-            'id': utterance['Id_post'],
+            'id': str(utterance['Id_post']),
             'is_answer': 1 if is_accepted else 0
         }
 

@@ -25,16 +25,16 @@ class StackExchangeJSONBuilder:
         spam_votes_df = votes_df.loc[votes_df['VoteTypeId'].isin(['4', '12'])].copy()
 
         # Convert necessary columns to numeric
-        posts_df['Id'] = pd.to_numeric(posts_df['Id'])
-        posts_df['OwnerUserId'] = pd.to_numeric(posts_df['OwnerUserId'])
-        posts_df['ParentId'] = pd.to_numeric(posts_df['ParentId'])
+        posts_df['Id'] = pd.to_numeric(posts_df['Id'], downcast='integer')
+        posts_df['OwnerUserId'] = pd.to_numeric(posts_df['OwnerUserId'], downcast='integer')
+        posts_df['ParentId'] = pd.to_numeric(posts_df['ParentId'], downcast='integer')
 
-        comments_df['Id'] = pd.to_numeric(comments_df['Id'])
-        comments_df['PostId'] = pd.to_numeric(comments_df['PostId'])
-        comments_df['UserId'] = pd.to_numeric(comments_df['UserId'])
+        comments_df['Id'] = pd.to_numeric(comments_df['Id'], downcast='integer')
+        comments_df['PostId'] = pd.to_numeric(comments_df['PostId'], downcast='integer')
+        comments_df['UserId'] = pd.to_numeric(comments_df['UserId'], downcast='integer')
 
-        users_df['Id'] = pd.to_numeric(users_df['Id'])
-        spam_votes_df['PostId'] = pd.to_numeric(spam_votes_df['PostId'])
+        users_df['Id'] = pd.to_numeric(users_df['Id'], downcast='integer')
+        spam_votes_df['PostId'] = pd.to_numeric(spam_votes_df['PostId'], downcast='integer')
 
         print('Merging the information...')
         posts_df = posts_df.loc[~posts_df['OwnerUserId'].isnull()]
