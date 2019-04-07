@@ -1,5 +1,6 @@
 from csearch.converters.xml2pandas import XML2Pandas
 from csearch.converters.pandas2json import Pandas2JSON
+from pandas import DataFrame
 import pandas as pd
 import json
 
@@ -9,7 +10,12 @@ class StackExchangeJSONBuilder:
     def __init__(self, folder):
         self.__root_folder = folder
 
-    def __generate_dataframe(self):
+    def __generate_dataframe(self) -> DataFrame:
+        """
+        Loads all the necessary XML files in memory, converts them into pandas DataFrame and merges them together
+        The unnecessary columns are thrown away during the process
+        :return:
+        """
         print('Fetching XML files from ' + self.__root_folder)
         # Generate the dataframe for posts and comments
         posts_df = XML2Pandas(self.__root_folder + '/Posts.xml').convert()
@@ -92,7 +98,7 @@ class StackExchangeJSONBuilder:
 
         return filtered_df
 
-    def build_json(self):
+    def build_json(self) -> None:
         df = self.__generate_dataframe()
         print('Starting the conversion to JSON format')
         df_json = Pandas2JSON(df, 'Apple').convert()

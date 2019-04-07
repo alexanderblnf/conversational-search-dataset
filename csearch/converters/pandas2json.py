@@ -1,5 +1,6 @@
 from math import floor
 from pandas import DataFrame
+from csearch.models.json_dialogue import JsonDialogue
 
 
 class Pandas2JSON:
@@ -13,114 +14,28 @@ class Pandas2JSON:
         self.__output = {}
         self.__global_index = 0
 
-    def __init_entry(self, utterance):
+    def __init_entry(self, utterance: dict, usernames: tuple) -> JsonDialogue:
         """
         Format the standard entry before adding the utterances
         :param utterance:
-        :return: An utterance "stub"
+        :return: An dialogue "stub"
         """
-        return {
-            'category': self.category,
-            'title': utterance['Title'],
-            'dialog_time': utterance['CreationDate_post']
-        }
+        return JsonDialogue(self.category, utterance['Title'], utterance['CreationDate_post'], usernames)
+
+    def __add_to_output(self, entry: JsonDialogue) -> None:
+        entry.concat_consecutive_same_person_comments()
+        self.__output[self.__global_index] = entry.as_dict()
+        self.__global_index += 1
 
     @classmethod
-    def __get_usernames(cls, df):
+    def __get_usernames(cls, df: DataFrame) -> list:
         users_comments = df.loc[~df['DisplayName_comment'].isnull()].drop_duplicates('DisplayName_comment')[
             'DisplayName_comment'].tolist()
         users_posts = df.drop_duplicates('DisplayName_post')['DisplayName_post'].tolist()
 
         return users_comments + list(set(users_posts) - set(users_comments))
 
-    @classmethod
-    def __is_other_mention(cls, usernames, text):
-        normalized_text = ''
-        try:
-            normalized_text = text[1:] if text[0] == '@' else text
-        except IndexError:
-            print(text)
-
-        return normalized_text.startswith(usernames)
-
-    @classmethod
-    def __format_utterance(cls, utterance, current_position, is_agent=False, is_comment=False, is_accepted=False):
-        """
-        Given an utterance, this function formats it similar to this https://ciir.cs.umass.edu/downloads/msdialog/
-        :param utterance: The current utterance to be formatted
-        :param current_position: The position of the current utterance
-        :param is_agent: True if the utterance has been emitted by an agent
-        :param is_comment: True if the utterance is a comment
-        :param is_accepted: True if the current response is the accepted one
-        :return: A formatted utterance
-        """
-
-        actor_type = 'agent' if is_agent else 'user'
-        if is_comment:
-            return {
-                'utterance': utterance['Text'],
-                'utterance_time': utterance['CreationDate_comment'],
-                'utterance_pos': current_position,
-                'actor_type': actor_type,
-                'user_name': utterance['DisplayName_comment'],
-                'user_id': utterance['UserId'],
-                'votes': utterance['Score_comment'],
-                'id': utterance['Id_post'] + utterance['Id_comment'],
-                'is_answer': 0
-            }
-
-        return {
-            'utterance': utterance['Body'],
-            'utterance_time': utterance['CreationDate_post'],
-            'utterance_pos': current_position,
-            'actor_type': actor_type,
-            'user_name': utterance['DisplayName_post'],
-            'user_id': utterance['OwnerUserId'],
-            'votes': utterance['Score_post'],
-            'id': utterance['Id_post'],
-            'is_answer': 1 if is_accepted else 0
-        }
-
-    def __append_utterance(self, entry, original_post, response, usernames, is_accepted=False):
-        """
-        Appends the utterance(s) to the dialog
-        :param entry: The dialogue entry to which the utterances are appended
-        :param original_post: The original question
-        :param response: The current response under analysis
-        :param is_accepted: Is True if the current response is the accepted one
-        :return: The updated dialogue entry
-        """
-
-        current_position = 1
-        updated_entry = entry
-        if 'utterances' not in updated_entry:
-            updated_entry['utterances'] = []
-            updated_entry['utterances'].append(self.__format_utterance(original_post, current_position))
-            current_position += 1
-
-            updated_entry['utterances'].append(
-                self.__format_utterance(
-                    response, current_position, is_agent=True, is_comment=False, is_accepted=is_accepted
-                )
-            )
-            current_position += 1
-        else:
-            current_position = len(entry['utterances']) + 1
-
-        if response['UserId'] == original_post['OwnerUserId'] and ~self.__is_other_mention(usernames, response['Text']):
-            updated_entry['utterances'].append(
-                self.__format_utterance(response, current_position, is_agent=False, is_comment=True)
-            )
-            current_position += 1
-
-        if response['UserId'] == response['OwnerUserId'] and ~self.__is_other_mention(usernames, response['Text']):
-            updated_entry['utterances'].append(
-                self.__format_utterance(response, current_position, is_agent=True, is_comment=True)
-            )
-
-        return updated_entry
-
-    def __generate_dialogues_from_responses(self, original_post, responses):
+    def __generate_dialogues_from_responses(self, original_post, responses) -> None:
         """
         Given a question, this function processes all the responses and turns them into separate dialogues
         :param original_post: The original question on the thread
@@ -135,23 +50,29 @@ class Pandas2JSON:
 
         current_post_id = responses.iloc[0]['Id_post']
         accepted_answer_id = original_post['AcceptedAnswerId']
-        entry = self.__init_entry(original_post)
+        original_user_id = original_post['OwnerUserId']
+
+        entry = self.__init_entry(original_post, usernames)
         for index, response in responses.iterrows():
+            if response['OwnerUserId'] == original_user_id:
+                continue
+
             current_response_id = response['Id_post']
             is_accepted = (current_response_id == accepted_answer_id)
+
             if current_response_id == current_post_id:
-                entry = self.__append_utterance(entry, original_post, response, usernames, is_accepted)
+                entry.append_utterance(original_post, response, is_accepted)
             else:
-                self.__output[self.__global_index] = entry
-                self.__global_index += 1
-                entry = self.__init_entry(original_post)
+                self.__add_to_output(entry)
+
+                entry = self.__init_entry(original_post, usernames)
+                entry.append_utterance(original_post, response, is_accepted)
+
                 current_post_id = current_response_id
-                entry = self.__append_utterance(entry, original_post, response, usernames, is_accepted)
 
-        self.__output[self.__global_index] = entry
-        self.__global_index += 1
+        self.__add_to_output(entry)
 
-    def convert(self):
+    def convert(self) -> dict:
         """
         Given a dataframe, this function turns it into a JSON array with dialogues and utterances
         :return: JSON dataset
