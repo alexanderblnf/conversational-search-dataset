@@ -2,14 +2,24 @@ from csearch.builders.json_builder import StackExchangeJSONBuilder
 from csearch.builders.training_builder import TrainingSetBuilder
 import os
 import sys
+import stanfordnlp
 
 
-def build_json(dump_folder):
+def build_json(dump_folder: str):
     StackExchangeJSONBuilder(dump_folder).build_json()
 
 
-def build_training(dump_folder):
-    TrainingSetBuilder(dump_folder).build()
+def build_training(dump_folder: str):
+    dataset_split = {
+        'train': 0.8,
+        'dev': 0.1,
+        'test': 0.1,
+    }
+    TrainingSetBuilder(dump_folder).build(dataset_split)
+
+
+def build_training_negative(dump_folder: str):
+    stanfordnlp.download('en')
 
 
 if __name__ == "__main__":
@@ -23,6 +33,7 @@ if __name__ == "__main__":
     switch = {
         'json': build_json,
         'training': build_training,
+        'training_negative': build_training_negative,
     }
     try:
         switch[mode](dump_folder)
