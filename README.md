@@ -6,9 +6,7 @@ you need to run the `fetch_stackexchange_dump.sh` script. This will create a fol
 called `stackexchange_dump` and will put all the .xml files there. During the process, it might ask
 to install a utility to unzip `.7z` files. 
 
-In developing this project, Python 3.6.8 was used.
-
-In order to install all the required external dependencies, please run pip install -r requirements.txt in the root folder of the project. We recommend using a virtual enviroment.
+In order to install all the required external dependencies, please run pip install -r requirements.txt in the root folder of the project. We recommend using a virtual enviroment with Python 3.6.8.
 
 To run the script that turns the XML dump into a JSON file similar to
 [this format](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
