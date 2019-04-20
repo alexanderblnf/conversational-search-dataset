@@ -11,9 +11,9 @@ class JsonDialogue:
         - Whether or not the dialogue had concatenated utterances (when the same users generated consecutive utterances)
     """
 
-    def __init__(self, category, title, dialog_time, usernames):
-        self.category = category,
-        self.title = title,
+    def __init__(self, category: str, title: str, dialog_time, usernames):
+        self.category = category
+        self.title = title
         self.dialog_time = dialog_time
         self.usernames = usernames
         self.utterances = []
