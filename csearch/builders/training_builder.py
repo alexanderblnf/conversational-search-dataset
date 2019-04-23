@@ -1,6 +1,5 @@
 import json
 import csv
-import os
 from csearch.converters.json2training import JSON2Training
 
 
@@ -29,21 +28,10 @@ class TrainingSetBuilder:
         with open(self.__json_location + '/data.json', 'r') as f:
             json_data = json.load(f)
 
-        processed_agent_corpus = None
-        try:
-            with open(self.__json_location + '/agent_corpus.json', 'r') as corpus_f:
-                processed_agent_corpus = json.load(corpus_f)
-        except FileNotFoundError:
-            pass
-
-        json2training_converter = JSON2Training(json_data, dataset_split, processed_agent_corpus)
+        json2training_converter = JSON2Training(json_data, dataset_split)
         training_set = json2training_converter.convert()
         dialog_lookup_table = json2training_converter.get_dialog_lookup_table()
 
         for allocation in dataset_split.keys():
             self.__write_tsv('data_' + allocation + '.tsv', training_set[allocation])
             self.__write_tsv('data_lookup_' + allocation + '.tsv', dialog_lookup_table[allocation])
-
-        if processed_agent_corpus is None:
-            with open(self.__json_location + '/agent_corpus.json', 'w') as f:
-                json.dump(json2training_converter.get_processed_corpus(), f)

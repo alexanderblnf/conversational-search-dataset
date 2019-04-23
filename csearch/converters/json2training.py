@@ -1,17 +1,15 @@
-import json
 from csearch.helpers.bm25_helper import BM25Helper
+from math import floor
 
 
 class JSON2Training:
-    def __init__(self, json_data: dict, dataset_split: dict, processed_agent_corpus:dict = None):
+    def __init__(self, json_data: dict, dataset_split: dict, processed_agent_corpus: dict = None):
         self.json_data = json_data
         self.__index_split = self.__split_chronologically(dataset_split)
-        self.__raw_agent_corpus = None
 
-        if processed_agent_corpus is None:
-            self.__raw_agent_corpus = self.__build_raw_agent_corpus()
+        self.__raw_agent_corpus = self.__build_raw_agent_corpus()
 
-        self.__bm25_helper = self.__build_bm25_helper(processed_agent_corpus)
+        self.__bm25_helper = None
 
         self.__training_set = {
             'train': [],
@@ -24,17 +22,11 @@ class JSON2Training:
             'test': []
         }
 
-    def __build_bm25_helper(self, processed_agent_corpus:dict) -> dict:
+    def __build_bm25_helper(self, allocation: str, processed_agent_corpus: dict = None) -> BM25Helper:
         if processed_agent_corpus is None:
-            return {
-                'train': BM25Helper('train', raw_corpus=self.__raw_agent_corpus['train']),
-                'dev': BM25Helper('dev', raw_corpus=self.__raw_agent_corpus['dev']),
-            }
+            return BM25Helper(allocation, self.__raw_agent_corpus[allocation])
 
-        return {
-            'train': BM25Helper('train', processed_corpus=processed_agent_corpus['train']),
-            'dev': BM25Helper('dev', processed_corpus=processed_agent_corpus['dev']),
-        }
+        return BM25Helper(allocation, self.__raw_agent_corpus[allocation], processed_agent_corpus[allocation])
 
     def __build_raw_agent_corpus(self) -> dict:
         """
@@ -45,15 +37,16 @@ class JSON2Training:
         corpus = {
             'train': [],
             'dev': [],
+            'test': [],
         }
 
         for (key, dialogue) in self.json_data.items():
             if key == self.__index_split['dev_start_index']:
                 current_dataset_allocation = 'dev'
             elif key == self.__index_split['test_start_index']:
-                break
+                current_dataset_allocation = 'test'
 
-            corpus[current_dataset_allocation].append(self.__process_agent_responses(dialogue))
+            corpus[current_dataset_allocation] += (self.__process_agent_responses(dialogue))
 
         return corpus
 
@@ -100,12 +93,12 @@ class JSON2Training:
             self.__dialog_lookup_table[allocation].append(key)
             self.__training_set[allocation].append(training_entry)
 
-            negative_training_entry = ([0] + training_entry[1:len(training_entry) - 2])
-            top_responses = self.__bm25_helper[allocation].get_top_responses(true_answer, 10)
+            negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])
+            top_responses = self.__bm25_helper.get_top_responses(true_answer, 9)
 
             for top_response in top_responses:
                 self.__dialog_lookup_table[allocation].append(key)
-                self.__training_set[allocation].append(negative_training_entry + top_response)
+                self.__training_set[allocation].append(negative_training_entry + [top_response])
 
     def __split_chronologically(self, dataset_split: dict) -> dict:
         """
@@ -156,11 +149,21 @@ class JSON2Training:
         :return:
         """
         current_dataset_allocation = 'train'
+        self.__bm25_helper = self.__build_bm25_helper(current_dataset_allocation)
+        dataset_size = len(self.json_data.keys())
+        progress_increment = floor(dataset_size / 100)
+
+        print('Converting the json to training set')
         for (key, dialogue) in self.json_data.items():
+            if int(key) % progress_increment == 0:
+                print('Progress: ' + str(floor(int(key) / progress_increment)) + '%')
+
             if key == self.__index_split['dev_start_index']:
                 current_dataset_allocation = 'dev'
+                self.__bm25_helper = self.__build_bm25_helper(current_dataset_allocation)
             elif key == self.__index_split['test_start_index']:
                 current_dataset_allocation = 'test'
+                self.__bm25_helper = self.__build_bm25_helper(current_dataset_allocation)
 
             self.__process_dialogue(current_dataset_allocation, key, dialogue)
 

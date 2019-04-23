@@ -2,7 +2,6 @@ from csearch.builders.json_builder import StackExchangeJSONBuilder
 from csearch.builders.training_builder import TrainingSetBuilder
 import os
 import sys
-import stanfordnlp
 
 
 def build_json(dump_folder: str):
@@ -18,10 +17,6 @@ def build_training(dump_folder: str):
     TrainingSetBuilder(dump_folder).build(dataset_split)
 
 
-def build_training_negative(dump_folder: str):
-    stanfordnlp.download('en')
-
-
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Incorrect number of arguments. Syntax should be: python run.py [mode]")
@@ -33,12 +28,11 @@ if __name__ == "__main__":
     switch = {
         'json': build_json,
         'training': build_training,
-        'training_negative': build_training_negative,
     }
-    try:
-        switch[mode](dump_folder)
-    except KeyError:
-        options = "[" + " | ".join(switch.keys()) + "]"
-        print("Mode not found. Must be from " + options)
+    # try:
+    switch[mode](dump_folder)
+    # except KeyError:
+    #     options = "[" + " | ".join(switch.keys()) + "]"
+    #     print("Mode not found. Must be from " + options)
 
 
