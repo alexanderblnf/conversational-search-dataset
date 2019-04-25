@@ -81,6 +81,10 @@ class JSON2Training:
             )
         )
 
+        # Discard conversations with just 1 turn
+        if len(user_utterances) == 1:
+            return
+
         for user_utterance in user_utterances:
             current_pos = user_utterance['utterance_pos']
             if current_pos == len(utterances):
@@ -94,7 +98,10 @@ class JSON2Training:
             self.__training_set[allocation].append(training_entry)
 
             negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])
-            top_responses = self.__bm25_helper.get_top_responses(true_answer, 9)
+            top_responses = self.__bm25_helper.get_top_responses(true_answer, 10)
+
+            # First response is always identical to the true_answer
+            del(top_responses[0])
 
             for top_response in top_responses:
                 self.__dialog_lookup_table[allocation].append(key)
