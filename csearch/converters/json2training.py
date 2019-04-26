@@ -82,8 +82,10 @@ class JSON2Training:
         )
 
         # Discard conversations with just 1 turn
-        if len(user_utterances) == 1:
+        if len(user_utterances) <= 1:
             return
+
+        del(user_utterances[0])
 
         for user_utterance in user_utterances:
             current_pos = user_utterance['utterance_pos']
