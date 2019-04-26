@@ -14,10 +14,19 @@ class BM25Helper:
         self.model = BM25(self.processed_corpus)
 
     def __bm25_pre_process_utterance(self, query: str) -> list:
+        """
+        Tokenizes a utterance and removes stopwords and punctuation
+        :param query:
+        :return:
+        """
         doc = self.__pipeline(query)
         return [token.text.lower() for token in doc if not token.is_stop and not token.is_punct]
 
     def __pre_process_corpus(self) -> list:
+        """
+        Prepares each utterance in the corpus to be fed to BM25
+        :return:
+        """
         processed_corpus = []
 
         print('Pre-processing the ' + self.__allocation + ' agent corpus in order to apply BM25...')
@@ -36,6 +45,12 @@ class BM25Helper:
         return processed_corpus
 
     def get_top_responses(self, query: str,  n: int) -> list:
+        """
+        Given a query, this function returns the top n responses by applying BM25
+        :param query:
+        :param n:
+        :return:
+        """
         processed_query = self.__bm25_pre_process_utterance(query)
 
         scores = np.array(self.model.get_scores(processed_query))

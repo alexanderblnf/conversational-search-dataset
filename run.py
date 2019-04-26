@@ -29,10 +29,10 @@ if __name__ == "__main__":
         'json': build_json,
         'training': build_training,
     }
-    # try:
-    switch[mode](dump_folder)
-    # except KeyError:
-    #     options = "[" + " | ".join(switch.keys()) + "]"
-    #     print("Mode not found. Must be from " + options)
+    try:
+        switch[mode](dump_folder)
+    except KeyError:
+        options = "[" + " | ".join(switch.keys()) + "]"
+        print("Mode not found. Must be from " + options)
 
 

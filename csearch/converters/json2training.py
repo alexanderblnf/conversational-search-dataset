@@ -3,7 +3,7 @@ from math import floor
 
 
 class JSON2Training:
-    def __init__(self, json_data: dict, dataset_split: dict, processed_agent_corpus: dict = None):
+    def __init__(self, json_data: dict, dataset_split: dict):
         self.json_data = json_data
         self.__index_split = self.__split_chronologically(dataset_split)
 
@@ -85,6 +85,7 @@ class JSON2Training:
         if len(user_utterances) <= 1:
             return
 
+        # Discard smallest context (with just 1 turn)
         del(user_utterances[0])
 
         for user_utterance in user_utterances:
@@ -177,4 +178,3 @@ class JSON2Training:
             self.__process_dialogue(current_dataset_allocation, key, dialogue)
 
         return self.__training_set
-
