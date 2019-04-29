@@ -11,12 +11,25 @@ We recommend using a virtual enviroment with Python 3.6.8.
 
 To run the script that turns the XML dump into a JSON file similar to
 [MSDialog - Complete](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
-`run.py json`. The output is stored in `stackexchange_dump/data.json`
+`python run.py json {topic}`, where `{topic}` is a supported topic from StackExchange.
+The updated list of topics is being maintained
+[here](https://github.com/alexanderblnf/conversational-search-dataset/wiki/Supported-Topics)
+The output is stored in `stackexchange_dump/{topic}/data.json`
 
 To run the script that turns the JSON file to a training dataset similar to 
 [MSDialog - ResponseRank](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
-`run.py training`. The output is stored in `stackexchange_dump/data_{allocation}.tsv`,
+`python run.py training {topic}`. 
+The output is stored in `stackexchange_dump/{topic}/data_{allocation}.tsv`,
 where `allocation` is either train, dev or test. 
+
+There is always an utility script named `merge_topics.sh`, which accepts as many
+topics as parameters. The script merges the `.tsv` files into one and provides
+a lookup file to identify which part of the final file belongs to which topic.
+
+Example: `./merge_topics bicycles movies` will create a file 
+`./stackexchange_dump/merge_bicycles_movies.tsv` that contains all the contexts
+from the 2 datasets. The `merge_bicycles_movies_lookup` file contains the positions
+at which each topic begins. 
 
 ##### JSON data format:
 

@@ -4,35 +4,53 @@ import os
 import sys
 
 
-def build_json(dump_folder: str):
-    StackExchangeJSONBuilder(dump_folder).build_json()
+def build_json(dump_folder: str, topic: str):
+    StackExchangeJSONBuilder(dump_folder, topic).build_json()
 
 
-def build_training(dump_folder: str):
+def build_training(dump_folder: str, topic: str):
     dataset_split = {
-        'train': 0.8,
-        'dev': 0.1,
-        'test': 0.1,
+        'train': 0.7,
+        'dev': 0.15,
+        'test': 0.15,
     }
     TrainingSetBuilder(dump_folder).build(dataset_split)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Incorrect number of arguments. Syntax should be: python run.py [mode]")
+    if len(sys.argv) != 3:
+        print("ERROR: Incorrect number of arguments. Syntax should be: python run.py [mode] [topic]")
         exit(-1)
-
-    mode = sys.argv[1]
-    dump_folder = os.path.dirname(os.path.abspath(__file__)) + '/stackexchange_dump'
 
     switch = {
         'json': build_json,
         'training': build_training,
     }
-    try:
-        switch[mode](dump_folder)
-    except KeyError:
-        options = "[" + " | ".join(switch.keys()) + "]"
-        print("Mode not found. Must be from " + options)
 
+    mode = sys.argv[1]
+
+    if mode not in switch.keys():
+        options = "[" + " | ".join(switch.keys()) + "]"
+        print("ERROR: Mode not found. Must be from " + options)
+        exit(-1)
+
+    topic = sys.argv[2]
+
+    allowed_topics = [
+        "android", "apple", "bicycles", "biology", "buddhism", "cooking", "ell", "economics", "law",
+        "money", "movies", "music", "photo", "politics", "salesforce", "security", "sound", "travel"
+    ]
+
+    if topic not in allowed_topics:
+        options = "[" + " | ".join(allowed_topics) + "]"
+        print("ERROR: Topic not found. Must be from " + options)
+        exit(-1)
+
+    dump_folder = os.path.dirname(os.path.abspath(__file__)) + '/stackexchange_dump/' + topic
+
+    if not os.path.exists(dump_folder + '/Posts.xml'):
+        print("ERROR: The files for the chosen topic do not exist")
+        exit(-1)
+
+    switch[mode](dump_folder, topic)
 
