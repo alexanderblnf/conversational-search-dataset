@@ -22,14 +22,15 @@ To run the script that turns the JSON file to a training dataset similar to
 The output is stored in `stackexchange_dump/{topic}/data_{allocation}.tsv`,
 where `allocation` is either train, dev or test. 
 
-There is always an utility script named `merge_topics.sh`, which accepts as many
-topics as parameters. The script merges the `.tsv` files into one and provides
-a lookup file to identify which part of the final file belongs to which topic.
+There is also an utility script named `merge_topics.sh`, which accepts as many
+topics as parameters. The script merges the `.tsv` files into one
+(for each allocation) and provides a lookup file to identify which part of the
+final file belongs to which topic.
 
-Example: `./merge_topics bicycles movies` will create a file 
-`./stackexchange_dump/merge_bicycles_movies.tsv` that contains all the contexts
-from the 2 datasets. The `merge_bicycles_movies_lookup` file contains the positions
-at which each topic begins. 
+Example: `./merge_topics bicycles movies` will create 1 file, found at 
+`./stackexchange_dump/merge_bicycles_movies_{allocation}.tsv` that contains 
+all the contexts from the 2 datasets. The `merge_bicycles_movies_{allocation}_lookup` file 
+contains the positions at which each topic begins. 
 
 ##### JSON data format:
 

@@ -29,16 +29,24 @@ if [[ "$is_valid" -eq 0 ]]; then
 fi
 
 if [[ -f "$file_name" ]]; then
-    rm "$file_name"
-    rm "$file_name""_lookup"
+    rm "$file_name*"
 fi
 
 cd "$BASE_DIRECTORY"
 
-current_line=0
+current_line=(0 0 0)
 for domain in "$@"
 do
-    cat "$domain/data_train.tsv" >> "$file_name"".tsv"
-    echo "$current_line" >> "$file_name""_lookup"
-    current_line=$((current_line + $(($(wc -l < "$domain/data_train.tsv"))) ))
+    cat "$domain/data_train.tsv" >> "$file_name""_train.tsv"
+    echo "${current_line[0]}" >> "$file_name""_train__lookup"
+    current_line[0]=$((current_line[0] + $(($(wc -l < "$domain/data_train.tsv"))) ))
+
+    cat "$domain/data_dev.tsv" >> "$file_name""_dev.tsv"
+    echo "${current_line[1]}" >> "$file_name""_dev__lookup"
+    current_line[1]=$((current_line[1] + $(($(wc -l < "$domain/data_dev.tsv"))) ))
+
+    cat "$domain/data_test.tsv" >> "$file_name""_test.tsv"
+    echo "${current_line[2]}" >> "$file_name""_test__lookup"
+    current_line[2]=$((current_line[2] + $(($(wc -l < "$domain/data_test.tsv"))) ))
+
 done
