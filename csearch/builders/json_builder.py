@@ -7,8 +7,9 @@ import json
 
 class StackExchangeJSONBuilder:
 
-    def __init__(self, folder):
+    def __init__(self, folder, topic):
         self.__root_folder = folder
+        self.__topic = topic
 
     def __generate_dataframe(self) -> DataFrame:
         """
@@ -101,7 +102,7 @@ class StackExchangeJSONBuilder:
     def build_json(self) -> None:
         df = self.__generate_dataframe()
         print('Starting the conversion to JSON format')
-        df_json = Pandas2JSON(df, 'Apple').convert()
+        df_json = Pandas2JSON(df, self.__topic).convert()
 
         with open(self.__root_folder + '/data.json', 'w') as fp:
             json.dump(df_json, fp)

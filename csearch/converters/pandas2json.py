@@ -8,9 +8,9 @@ class Pandas2JSON:
     This class handles the conversion of a Pandas dataframe to a JSON dataset
     """
 
-    def __init__(self, df: DataFrame, category: str):
+    def __init__(self, df: DataFrame, topic: str):
         self.df = df
-        self.category = category
+        self.topic = topic
         self.__output = {}
         self.__global_index = 0
 
@@ -20,7 +20,7 @@ class Pandas2JSON:
         :param utterance:
         :return: An dialogue "stub"
         """
-        return JsonDialogue(self.category, utterance['Title'], utterance['CreationDate_post'], usernames)
+        return JsonDialogue(self.topic, utterance['Title'], utterance['CreationDate_post'], usernames)
 
     def __add_to_output(self, entry: JsonDialogue) -> None:
         entry.concat_consecutive_same_person_comments()
