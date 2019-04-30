@@ -22,6 +22,40 @@ class JSON2Training:
             'test': []
         }
 
+    @classmethod
+    def __is_valid_dialogue(cls, dialogue) -> bool:
+        """
+        Checks whether a dialogue is valid to be added in the training set
+        Rules:
+        - There should be at least 1 turn
+        - The dialogue should be grounded (at least one agent response should contain a link)
+        :param dialogue:
+        :return:
+        """
+        utterances = dialogue['utterances']
+        user_utterances = list(
+            filter(
+                lambda utterance: utterance['actor_type'] == 'user', utterances
+            )
+        )
+
+        # Discard conversations with just 1 turn
+        if len(user_utterances) <= 1:
+            return False
+
+        agent_utterances = list(
+            filter(
+                lambda utterance: utterance['actor_type'] == 'agent', utterances
+            )
+        )
+
+        # Check if at least one agent utterance is grounded (contains link)
+        for agent_utterance in agent_utterances:
+            if 'href' in agent_utterance['utterance']:
+                return True
+
+        return False
+
     def __build_bm25_helper(self, allocation: str, processed_agent_corpus: dict = None) -> BM25Helper:
         if processed_agent_corpus is None:
             return BM25Helper(allocation, self.__raw_agent_corpus[allocation])
@@ -81,15 +115,12 @@ class JSON2Training:
             )
         )
 
-        # Discard conversations with just 1 turn
-        if len(user_utterances) <= 1:
-            return
-
         # Discard smallest context (with just 1 turn)
         del(user_utterances[0])
 
         for user_utterance in user_utterances:
             current_pos = user_utterance['utterance_pos']
+
             if current_pos == len(utterances):
                 break
 
@@ -107,7 +138,7 @@ class JSON2Training:
             del(top_responses[0])
 
             for top_response in top_responses:
-                self.__dialog_lookup_table[allocation].append(key)
+                self.__dialog_lookup_table[allocation].append(int(key))
                 self.__training_set[allocation].append(negative_training_entry + [top_response])
 
     def __split_chronologically(self, dataset_split: dict) -> dict:
@@ -175,6 +206,7 @@ class JSON2Training:
                 current_dataset_allocation = 'test'
                 self.__bm25_helper = self.__build_bm25_helper(current_dataset_allocation)
 
-            self.__process_dialogue(current_dataset_allocation, key, dialogue)
+            if self.__is_valid_dialogue(dialogue):
+                self.__process_dialogue(current_dataset_allocation, key, dialogue)
 
         return self.__training_set

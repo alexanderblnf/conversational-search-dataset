@@ -57,7 +57,7 @@ class JsonDialogue:
         :return:
         """
         clean_text = re.sub('<(?!\/?a(?=>|\s.*>))\/?.*?>', '', text)
-        return clean_text.replace('\n', '')
+        return clean_text.replace('\n', '').replace('\r', '').replace('\t', '')
 
     @classmethod
     def __format_utterance(cls,
@@ -140,6 +140,18 @@ class JsonDialogue:
                 self.__format_utterance(response, current_position, is_agent=True, is_comment=True)
             )
 
+    @classmethod
+    def renumber_utterances(cls, utterances: list):
+        """
+        In case utterances are appended, the counter for the utterances position need to be reset
+        :param utterances:
+        :return:
+        """
+        current_position = 1
+        for utterance in utterances:
+            utterance['utterance_pos'] = current_position
+            current_position += 1
+
     def concat_consecutive_same_person_comments(self) -> None:
         """
         Concatenates consecutive utterances coming from the same user
@@ -180,5 +192,6 @@ class JsonDialogue:
             del utterances[i]
 
         if are_concatenated_comments:
+            self.renumber_utterances(utterances)
             self.utterances = utterances
             self.has_concatenated_utterances = 1

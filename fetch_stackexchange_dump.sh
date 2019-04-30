@@ -3,8 +3,8 @@
 topic=$1
 
 allowed_topics=( \
-    "android" "apple" "bicycles" "biology" "buddhism" "cooking" "ell" "economics" "law" \
-    "money" "movies" "music" "photo" "politics" "salesforce" "security" "sound" "travel" )
+    "academia" "android" "apple" "bicycles" "biology" "buddhism" "cooking" "ell" "economics" "law" \
+    "money" "movies" "music" "philosophy" "photo" "politics" "salesforce" "security" "sound" "travel" )
 
 checkTopic() {
     local e match="$1"

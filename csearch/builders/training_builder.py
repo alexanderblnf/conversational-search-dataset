@@ -19,6 +19,11 @@ class TrainingSetBuilder:
             for entry in data:
                 writer.writerow(entry)
 
+    def __write_array(self, file_name: str, data:list) -> None:
+        with open(self.__json_location + '/' + file_name, 'w') as f:
+            for entry in data:
+                f.write('%s\n' % entry)
+
     def build(self, dataset_split: dict) -> None:
         """
         Given a json structure, this function builds a tsv containing all possible (label, context, response) triples
@@ -34,4 +39,4 @@ class TrainingSetBuilder:
 
         for allocation in dataset_split.keys():
             self.__write_tsv('data_' + allocation + '.tsv', training_set[allocation])
-            self.__write_tsv('data_lookup_' + allocation + '.tsv', dialog_lookup_table[allocation])
+            self.__write_array('data_lookup_' + allocation + '.txt', dialog_lookup_table[allocation])
