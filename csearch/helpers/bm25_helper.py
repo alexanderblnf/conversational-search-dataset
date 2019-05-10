@@ -44,7 +44,7 @@ class BM25Helper:
 
         return processed_corpus
 
-    def get_top_responses(self, query: str,  n: int) -> list:
+    def get_negative_samples(self, query: str,  n: int) -> list:
         """
         Given a query, this function returns the top n responses by applying BM25
         :param query:
@@ -54,6 +54,6 @@ class BM25Helper:
         processed_query = self.__bm25_pre_process_utterance(query)
 
         scores = np.array(self.model.get_scores(processed_query))
-        top_indexes = np.argpartition(scores, -n)[-n:]
+        top_indexes = np.random.choice(np.argpartition(scores, -n)[-n:], n)
 
-        return self.raw_corpus[top_indexes[np.argsort(scores[top_indexes])[::-1]]].tolist()
+        return self.raw_corpus[top_indexes].tolist()

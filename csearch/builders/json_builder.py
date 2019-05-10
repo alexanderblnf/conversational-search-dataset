@@ -1,5 +1,6 @@
 from csearch.converters.xml2pandas import XML2Pandas
 from csearch.converters.pandas2json import Pandas2JSON
+from csearch.helpers.dataset_helper import DatasetHelper
 from pandas import DataFrame
 import pandas as pd
 import json
@@ -99,10 +100,22 @@ class StackExchangeJSONBuilder:
 
         return filtered_df
 
-    def build_json(self) -> None:
+    def __write_json(self, filename: str, data: dict) -> None:
+        with open(self.__root_folder + '/' + filename, 'w') as fp:
+            json.dump(data, fp)
+
+    def build_json(self, split: dict) -> None:
         df = self.__generate_dataframe()
         print('Starting the conversion to JSON format')
         df_json = Pandas2JSON(df, self.__topic).convert()
 
-        with open(self.__root_folder + '/data.json', 'w') as fp:
-            json.dump(df_json, fp)
+        self.__write_json('data.json', df_json)
+
+        # import json
+        # with open('./stackexchange_dump/apple/data.json', 'r') as f:
+        #     df_json = json.load(f)
+
+        split_dataset = DatasetHelper.get_split_dataset(df_json, split)
+        for allocation in split_dataset.keys():
+            self.__write_json('data_' + allocation + '.json', split_dataset[allocation])
+

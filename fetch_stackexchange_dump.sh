@@ -3,8 +3,9 @@
 topic=$1
 
 allowed_topics=( \
-    "academia" "android" "apple" "bicycles" "biology" "buddhism" "cooking" "ell" "economics" "law" \
-    "money" "movies" "music" "philosophy" "photo" "politics" "salesforce" "security" "sound" "travel" )
+    "academia" "android" "apple" "askubuntu" "bicycles" "biology" "buddhism" "cooking" "dba" "diy" "electronics" "ell" "economics" \
+    "english" "gaming" "gis" "math" "security" "law" "money" "movies" "music" "philosophy" \
+    "physics" "photo" "politics" "salesforce" "scifi" "security" "sound" "stats" "travel" "workplace" "worldbuilding")
 
 checkTopic() {
     local e match="$1"
@@ -19,7 +20,8 @@ topic=$1
 
 checkTopic "$topic" "${allowed_topics[@]}"
 
-read -p "This script requires the p7zip utility to unzip the dump: Do you wish to install it? (y\n): " install_util
+install_util="k"
+#read -p "This script requires the p7zip utility to unzip the dump: Do you wish to install it? (y\n): " install_util
 
 if [[ "$install_util" == "y" ]]; then
     case "$OSTYPE" in
@@ -51,10 +53,17 @@ cd "$topic"
 echo "Initiating the download of the stackExchange dump"
 
 # Fetch and extract dataset
-curl -L0 "https://archive.org/download/stackexchange/$topic.stackexchange.com.7z" -o dump.7z       && \
-7z x dump.7z && \
-rm dump.7z && \
-rm Badges.xml PostLinks.xml PostHistory.xml Tags.xml
+if [[ "$topic" == "askubuntu" ]]; then
+    curl -L0 "https://archive.org/download/stackexchange/$topic.com.7z" -o dump.7z       && \
+    7z x dump.7z && \
+    rm dump.7z && \
+    rm Badges.xml PostLinks.xml PostHistory.xml Tags.xml
+else
+    curl -L0 "https://archive.org/download/stackexchange/$topic.stackexchange.com.7z" -o dump.7z       && \
+    7z x dump.7z && \
+    rm dump.7z && \
+    rm Badges.xml PostLinks.xml PostHistory.xml Tags.xml
+fi
 
 curl -L0 https://archive.org/download/stackexchange/readme.txt -o schema.txt
 

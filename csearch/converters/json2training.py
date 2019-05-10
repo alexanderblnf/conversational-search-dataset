@@ -33,6 +33,7 @@ class JSON2Training:
         :return:
         """
         utterances = dialogue['utterances']
+
         user_utterances = list(
             filter(
                 lambda utterance: utterance['actor_type'] == 'user', utterances

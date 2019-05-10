@@ -5,7 +5,12 @@ import sys
 
 
 def build_json(dump_folder: str, topic: str):
-    StackExchangeJSONBuilder(dump_folder, topic).build_json()
+    dataset_split = {
+        'train': 0.7,
+        'dev': 0.15,
+        'test': 0.15,
+    }
+    StackExchangeJSONBuilder(dump_folder, topic).build_json(dataset_split)
 
 
 def build_training(dump_folder: str, topic: str):
@@ -37,8 +42,11 @@ if __name__ == "__main__":
     topic = sys.argv[2]
 
     allowed_topics = [
-        "academia", "android", "apple", "bicycles", "biology", "buddhism", "cooking", "ell", "economics", "law",
-        "money", "movies", "music", "philosophy", "photo", "politics", "salesforce", "security", "sound", "travel"
+        "academia", "android", "apple", "askubuntu", "bicycles", "biology", "buddhism", "cooking", "dba", "diy",
+        "electronics", "ell", "economics",
+        "english", "gaming", "gis", "math", "security", "law", "money", "movies", "music", "philosophy",
+        "physics", "photo", "politics", "salesforce", "scifi", "security", "sound", "stats", "travel",
+        "workplace", "worldbuilding"
     ]
 
     if topic not in allowed_topics:
