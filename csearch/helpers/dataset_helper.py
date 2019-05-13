@@ -1,3 +1,5 @@
+import os
+import json
 
 
 class DatasetHelper:
@@ -54,3 +56,46 @@ class DatasetHelper:
             split_dataset[current_dataset_allocation].update({key: entry})
 
         return split_dataset
+
+    @classmethod
+    def __add_topic_to_dataset(cls, topic, allocation, dataset, current_id) -> tuple:
+        root_folder = os.path.dirname(__file__) + '/../../stackexchange_dump/'
+        dataset_file = root_folder + topic + '/data_' + allocation + '.json'
+
+        if not os.path.isfile(dataset_file):
+            raise Exception('Could not find json dataset for topic: ' + topic)
+
+        with open(dataset_file, 'r') as f:
+            json_data = json.load(f)
+
+        for i, entry in json_data.items():
+            dataset[current_id] = entry
+            current_id += 1
+
+        return dataset, current_id
+
+    @classmethod
+    def merge_topics(cls, topics: list):
+
+        merged_dataset = {
+            'train': {},
+            'dev': {},
+            'test': {}
+        }
+
+        current_ids = {
+            'train': 0,
+            'dev': 0,
+            'test': 0
+        }
+
+        for allocation in merged_dataset.keys():
+            for topic in topics:
+                merged_dataset[allocation], current_ids[allocation] = DatasetHelper.__add_topic_to_dataset(
+                    topic, allocation, merged_dataset[allocation], current_ids[allocation]
+                )
+
+        for allocation in merged_dataset.keys():
+            with open(os.path.dirname(__file__) + '/../../stackexchange_dump/merged_' + allocation + '.json', 'w') as fp:
+                json.dump(merged_dataset[allocation], fp)
+

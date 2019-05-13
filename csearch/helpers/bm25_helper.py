@@ -5,9 +5,8 @@ from math import floor
 
 
 class BM25Helper:
-    def __init__(self, allocation: str, raw_corpus: list, processed_corpus: list = None):
+    def __init__(self, raw_corpus: list, processed_corpus: list = None):
         self.__pipeline = spacy.load('en_core_web_sm', disable=["parser", "tagger", "ner"])
-        self.__allocation = allocation
         self.raw_corpus = raw_corpus
         self.processed_corpus = self.__pre_process_corpus() if processed_corpus is None else processed_corpus
         self.raw_corpus = np.array(self.raw_corpus)
@@ -29,7 +28,7 @@ class BM25Helper:
         """
         processed_corpus = []
 
-        print('Pre-processing the ' + self.__allocation + ' agent corpus in order to apply BM25...')
+        print('Pre-processing the agent corpus in order to apply BM25...')
 
         corpus_size = len(self.raw_corpus)
         progress_increment = floor(corpus_size / 100)
@@ -54,6 +53,8 @@ class BM25Helper:
         processed_query = self.__bm25_pre_process_utterance(query)
 
         scores = np.array(self.model.get_scores(processed_query))
-        top_indexes = np.random.choice(np.argpartition(scores, -n)[-n:], n)
+        subset_length = min(1000, len(scores))
+
+        top_indexes = np.random.choice(np.argpartition(scores, -subset_length)[-subset_length:], n)
 
         return self.raw_corpus[top_indexes].tolist()

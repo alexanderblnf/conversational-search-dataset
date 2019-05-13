@@ -111,11 +111,10 @@ class StackExchangeJSONBuilder:
 
         self.__write_json('data.json', df_json)
 
-        # import json
-        # with open('./stackexchange_dump/apple/data.json', 'r') as f:
-        #     df_json = json.load(f)
-
         split_dataset = DatasetHelper.get_split_dataset(df_json, split)
         for allocation in split_dataset.keys():
             self.__write_json('data_' + allocation + '.json', split_dataset[allocation])
+
+
+
 
