@@ -1,5 +1,6 @@
 import os
 import json
+from csearch.helpers.bm25_helper import BM25Helper
 
 
 class DatasetHelper:
@@ -98,4 +99,69 @@ class DatasetHelper:
         for allocation in merged_dataset.keys():
             with open(os.path.dirname(__file__) + '/../../stackexchange_dump/merged_' + allocation + '.json', 'w') as fp:
                 json.dump(merged_dataset[allocation], fp)
+
+    @classmethod
+    def __build_raw_agent_corpus(cls, json_data: dict) -> list:
+        """
+        Builds the agent corpus, which is used to generate additional dialogues using BM25
+        :return:
+        """
+        corpus = []
+
+        for (key, dialogue) in json_data.items():
+            corpus += (DatasetHelper.__process_agent_responses(dialogue))
+
+        return corpus
+
+    @classmethod
+    def __build_multi_topic_raw_agent_corpus(cls, json_data: dict) -> dict:
+        """
+        Builds the agent corpus, which is used to generate additional dialogues using BM25
+        :return:
+        """
+        corpus = {}
+
+        for (key, dialogue) in json_data.items():
+            topic = dialogue['category']
+            if topic not in corpus:
+                corpus[topic] = []
+
+            corpus[topic] += (DatasetHelper.__process_agent_responses(dialogue))
+
+        return corpus
+
+    @classmethod
+    def build_bm25_helper(cls, json_data: dict) -> BM25Helper:
+        """
+        Build the bm25 helper, that will be used to perform negative sampling
+        :return:
+        """
+        return BM25Helper(DatasetHelper.__build_raw_agent_corpus(json_data))
+
+    @classmethod
+    def build_multi_topic_bm25_helper(cls, json_data: dict) -> dict:
+        bm25_helper = {}
+        raw_agent_corpus = DatasetHelper.__build_multi_topic_raw_agent_corpus(json_data)
+
+        for topic, entry in raw_agent_corpus.items():
+            print('Building BM25 corpus for topic: ' + topic)
+            bm25_helper[topic] = BM25Helper(entry)
+
+        return bm25_helper
+
+    @classmethod
+    def __process_agent_responses(cls, dialogue: dict) -> list:
+        """
+        For a given dialogue, generates a list of pre-processed agent responses (ready for BM25)
+        :param dialogue:
+        :return:
+        """
+        utterances = dialogue['utterances']
+        agent_utterances = list(
+            filter(
+                lambda utterance: utterance['actor_type'] == 'agent', utterances
+            )
+        )
+
+        return [utterance['utterance'] for utterance in agent_utterances]
 
