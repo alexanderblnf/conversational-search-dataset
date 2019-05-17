@@ -37,6 +37,7 @@ class JSON2Training:
             first_utterance_pos = max(1, current_pos - 10)
             training_entry = ([1] + [utterance['utterance'] for utterance in utterances
                                      if first_utterance_pos <= utterance['utterance_pos'] <= current_pos + 1])
+
             true_answer = training_entry[-1]
 
             self.dialog_lookup_table.append(key)
