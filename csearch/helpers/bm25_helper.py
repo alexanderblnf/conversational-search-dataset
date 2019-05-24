@@ -54,7 +54,14 @@ class BM25Helper:
 
         scores = np.array(self.model.get_scores(processed_query))
         subset_length = min(1000, len(scores))
+        top_queries = np.argpartition(scores, -subset_length)[-subset_length:]
 
-        top_indexes = np.random.choice(np.argpartition(scores, -subset_length)[-subset_length:], n, replace=False)
+        top_indexes = np.random.choice(top_queries, n, replace=False)
+        unique_responses = list(set(self.raw_corpus[top_indexes]))
 
-        return self.raw_corpus[top_indexes].tolist()
+        while len(unique_responses) < n:
+            candidate_element = np.random.choice(top_queries, 1)[0]
+            if candidate_element not in unique_responses:
+                unique_responses.append(candidate_element)
+
+        return unique_responses
