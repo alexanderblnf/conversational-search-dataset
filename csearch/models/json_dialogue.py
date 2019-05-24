@@ -83,7 +83,7 @@ class JsonDialogue:
         :return:
         """
         # clean_text = re.sub('<(?!\/?a(?=>|\s.*>))\/?.*?>', '', text)
-        clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code).*?>')
+        clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code)(?!/blockquote)(?!/pre)(?!/code).*?>', '', text)
         return clean_text.replace('\n', '').replace('\r', '').replace('\t', '')
 
     @classmethod

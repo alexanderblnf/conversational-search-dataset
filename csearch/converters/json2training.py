@@ -40,7 +40,7 @@ class JSON2Training:
 
             true_answer = training_entry[-1]
 
-            self.dialog_lookup_table.append(key)
+            self.dialog_lookup_table.append(int(key))
             self.training_set.append(training_entry)
 
             negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])
@@ -109,7 +109,7 @@ class Json2EasyTraining(JSON2Training):
                                      if first_utterance_pos <= utterance['utterance_pos'] <= current_pos + 1])
             true_answer = training_entry[-1]
 
-            self.dialog_lookup_table.append(key)
+            self.dialog_lookup_table.append(int(key))
             self.training_set.append(training_entry)
 
             negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])

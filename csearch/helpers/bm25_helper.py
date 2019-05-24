@@ -55,6 +55,6 @@ class BM25Helper:
         scores = np.array(self.model.get_scores(processed_query))
         subset_length = min(1000, len(scores))
 
-        top_indexes = np.random.choice(np.argpartition(scores, -subset_length)[-subset_length:], n)
+        top_indexes = np.random.choice(np.argpartition(scores, -subset_length)[-subset_length:], n, replace=False)
 
         return self.raw_corpus[top_indexes].tolist()
