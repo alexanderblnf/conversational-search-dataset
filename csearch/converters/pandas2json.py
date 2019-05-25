@@ -1,6 +1,7 @@
 from math import floor
 from pandas import DataFrame
 from csearch.models.json_dialogue import JsonDialogue
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 class Pandas2JSON:
@@ -13,6 +14,7 @@ class Pandas2JSON:
         self.topic = topic
         self.__output = {}
         self.__global_index = 0
+        self.sid = SentimentIntensityAnalyzer()
 
     def __init_entry(self, utterance: dict, usernames: tuple) -> JsonDialogue:
         """
@@ -20,10 +22,29 @@ class Pandas2JSON:
         :param utterance:
         :return: An dialogue "stub"
         """
-        return JsonDialogue(self.topic, utterance['Title'], utterance['CreationDate_post'], usernames)
+        return JsonDialogue(self.topic, utterance['Title'], utterance['CreationDate_post'], usernames, self.sid)
 
     def __add_to_output(self, entry: JsonDialogue) -> None:
+        if len(entry.utterances) == 0:
+            return
+
         entry.concat_consecutive_same_person_comments()
+
+        if not entry.is_grounded():
+            return
+
+        if not entry.is_multiturn():
+            return
+
+        if not entry.is_feedback_final_response():
+            return
+
+        if not entry.is_two_way():
+            return
+
+        if entry.is_deprecated():
+            return
+
         self.__output[self.__global_index] = entry.as_dict()
         self.__global_index += 1
 
@@ -47,6 +68,7 @@ class Pandas2JSON:
 
         user_username = original_post['DisplayName_post']
         usernames = tuple(set(self.__get_usernames(responses)) - set(user_username))
+        # current_agent_usernames = []
 
         current_post_id = responses.iloc[0]['Id_post']
         accepted_answer_id = original_post['AcceptedAnswerId']

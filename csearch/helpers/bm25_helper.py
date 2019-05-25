@@ -5,9 +5,8 @@ from math import floor
 
 
 class BM25Helper:
-    def __init__(self, allocation: str, raw_corpus: list, processed_corpus: list = None):
+    def __init__(self, raw_corpus: list, processed_corpus: list = None):
         self.__pipeline = spacy.load('en_core_web_sm', disable=["parser", "tagger", "ner"])
-        self.__allocation = allocation
         self.raw_corpus = raw_corpus
         self.processed_corpus = self.__pre_process_corpus() if processed_corpus is None else processed_corpus
         self.raw_corpus = np.array(self.raw_corpus)
@@ -29,7 +28,7 @@ class BM25Helper:
         """
         processed_corpus = []
 
-        print('Pre-processing the ' + self.__allocation + ' agent corpus in order to apply BM25...')
+        print('Pre-processing the agent corpus in order to apply BM25...')
 
         corpus_size = len(self.raw_corpus)
         progress_increment = floor(corpus_size / 100)
@@ -44,7 +43,7 @@ class BM25Helper:
 
         return processed_corpus
 
-    def get_top_responses(self, query: str,  n: int) -> list:
+    def get_negative_samples(self, query: str,  n: int) -> list:
         """
         Given a query, this function returns the top n responses by applying BM25
         :param query:
@@ -54,6 +53,15 @@ class BM25Helper:
         processed_query = self.__bm25_pre_process_utterance(query)
 
         scores = np.array(self.model.get_scores(processed_query))
-        top_indexes = np.argpartition(scores, -n)[-n:]
+        subset_length = min(1000, len(scores))
+        top_queries = np.argpartition(scores, -subset_length)[-subset_length:]
 
-        return self.raw_corpus[top_indexes[np.argsort(scores[top_indexes])[::-1]]].tolist()
+        top_indexes = np.random.choice(top_queries, n, replace=False)
+        unique_responses = list(set(self.raw_corpus[top_indexes]))
+
+        while len(unique_responses) < n:
+            candidate_element = np.random.choice(top_queries, 1)[0]
+            if candidate_element not in unique_responses:
+                unique_responses.append(candidate_element)
+
+        return unique_responses

@@ -1,4 +1,5 @@
 import re
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 class JsonDialogue:
@@ -11,13 +12,38 @@ class JsonDialogue:
         - Whether or not the dialogue had concatenated utterances (when the same users generated consecutive utterances)
     """
 
-    def __init__(self, category: str, title: str, dialog_time, usernames):
+    def __init__(self, category: str, title: str, dialog_time, usernames, sid: SentimentIntensityAnalyzer):
         self.category = category
         self.title = title
         self.dialog_time = dialog_time
         self.usernames = usernames
         self.utterances = []
+        self.__agent_utterances = []
         self.has_concatenated_utterances = 0
+        self.sid = sid
+        self.polarity_threshold = {
+            'apple': 0.3,
+            'askubuntu': 0.37,
+            'dba': 0.35,
+            'diy': 0,
+            'electronics': 0.06,
+            'english': 0.23,
+            'gaming': 0.07,
+            'gis': 0.35,
+            'physics': 0.54,
+            'scifi': 0,
+            'security': 0.28,
+            'stats': 0.48,
+            'travel': 0.17,
+            'worldbuilding': 0.58,
+        }
+
+    def __build_agent_utterances(self):
+        self.__agent_utterances = list(
+            filter(
+                lambda utterance: utterance['actor_type'] == 'agent', self.utterances
+            )
+        )
 
     def as_dict(self) -> dict:
         """
@@ -56,8 +82,9 @@ class JsonDialogue:
         :param text:
         :return:
         """
-        clean_text = re.sub('<(?!\/?a(?=>|\s.*>))\/?.*?>', '', text)
-        return clean_text.replace('\n', '')
+        # clean_text = re.sub('<(?!\/?a(?=>|\s.*>))\/?.*?>', '', text)
+        clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code)(?!/blockquote)(?!/pre)(?!/code).*?>', '', text)
+        return clean_text.replace('\n', '').replace('\r', '').replace('\t', '')
 
     @classmethod
     def __format_utterance(cls,
@@ -127,28 +154,36 @@ class JsonDialogue:
         else:
             current_position = len(self.utterances) + 1
 
-        # The original user posted a comment and is not mentioning other users but the one in the dialogue
-        if response['UserId'] == original_post['OwnerUserId'] and ~self.__is_other_mention(response['Text']):
+        # The original user posted a comment
+        if response['UserId'] == original_post['OwnerUserId']:
+                # and ~self.__is_other_mention(response['Text']):
             self.utterances.append(
                 self.__format_utterance(response, current_position, is_agent=False, is_comment=True)
             )
             current_position += 1
-
-        # The original responder posted a comment and is not mentioning other users but the one in the dialogue
-        if response['UserId'] == response['OwnerUserId'] and ~self.__is_other_mention(response['Text']):
+        # Other users commented. If the response['Text'] is a float, that means it's not a comment
+        elif not isinstance(response['Text'], float):
             self.utterances.append(
                 self.__format_utterance(response, current_position, is_agent=True, is_comment=True)
             )
+
+    @classmethod
+    def renumber_utterances(cls, utterances: list):
+        """
+        In case utterances are appended, the counter for the utterances position need to be reset
+        :param utterances:
+        :return:
+        """
+        current_position = 1
+        for utterance in utterances:
+            utterance['utterance_pos'] = current_position
+            current_position += 1
 
     def concat_consecutive_same_person_comments(self) -> None:
         """
         Concatenates consecutive utterances coming from the same user
         :return:
         """
-
-        if len(self.utterances) == 0:
-            return
-
         i = 0
         indexes_to_remove = []
         are_concatenated_comments = False
@@ -180,5 +215,59 @@ class JsonDialogue:
             del utterances[i]
 
         if are_concatenated_comments:
+            self.renumber_utterances(utterances)
             self.utterances = utterances
             self.has_concatenated_utterances = 1
+
+    def is_feedback_final_response(self) -> bool:
+        last_utterance = self.utterances[-1]
+        polarity_score = self.sid.polarity_scores(last_utterance['utterance'])['compound']
+
+        if last_utterance['actor_type'] == 'user':
+            return polarity_score >= self.polarity_threshold[self.category]
+
+        return True
+
+    def is_two_way(self) -> bool:
+        agents = set([utterance['user_id'] for utterance in self.utterances])
+
+        if len(agents) > 2:
+            return False
+
+        return True
+
+    def is_grounded(self) -> bool:
+        if not self.__agent_utterances:
+            self.__build_agent_utterances()
+
+        # Check if at least one agent utterance is grounded (contains link)
+        for agent_utterance in self.__agent_utterances:
+            urls = re.findall(
+                'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                agent_utterance['utterance']
+            )
+            if 'href' in agent_utterance['utterance'] or len(urls) > 0:
+                return True
+
+        return False
+
+    def is_multiturn(self) -> bool:
+        if not self.__agent_utterances:
+            self.__build_agent_utterances()
+
+        # Discard conversations with just 1 turn
+        if len(self.__agent_utterances) <= 1:
+            return False
+
+        return True
+
+    def is_deprecated(self) -> bool:
+        if not self.__agent_utterances:
+            self.__build_agent_utterances()
+
+        for utterance in self.__agent_utterances:
+            lower_utt = utterance['utterance'].lower()
+            if 'edit:' in lower_utt or 'deprecated:' in lower_utt:
+                return True
+
+        return False
