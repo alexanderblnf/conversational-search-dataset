@@ -1,36 +1,47 @@
 # conversational-search-dataset
-This repo contains the implementation for obtaining a conversational search dataset
+##### This repo contains the implementation for obtaining a conversational search dataset
 
+#### Fetching the .xml files for each stackExchange site
 To fetch the initial [stackExchange dump](https://archive.org/details/stackexchange),
 you need to run the `fetch_stackexchange_dump.sh` script. This will create a folder
 called `stackexchange_dump` and will put all the .xml files there. During the process, it might ask
 to install a utility to unzip `.7z` files. 
 
-In order to install all the required external dependencies, please run pip install -r requirements.txt in the root folder of the project. 
-We recommend using a virtual enviroment with Python 3.6.8.
+#### Installing dependencies
+
+In order to install all the required external dependencies, please run `pip install -r requirements.txt` in the root folder of the project. 
+We recommend using a virtual enviroment with Python >= 3.6.8. Python 2 is not supported.
+
+For NLP, the project uses [spacy](https://spacy.io/) and the [en_core_web_sm](https://spacy.io/usage/models)
+model. To download the model, please run `python -m spacy download en_core_web_sm`
+
+#### Building the JSON dataset
 
 To run the script that turns the XML dump into a JSON file similar to
-[MSDialog - Complete](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
-`python run.py json {topic}`, where `{topic}` is a supported topic from StackExchange.
-The updated list of topics is being maintained
-[here](https://github.com/alexanderblnf/conversational-search-dataset/wiki/Supported-Topics)
-The output is stored in `stackexchange_dump/{topic}/data.json`
+[MSDialog - Complete](https://ciir.cs.umass.edu/downloads/msdialog/), you are required to run
+(in the root folder) `python run.py json {topic}`, where `{topic}` is a supported
+topic from StackExchange. The updated list of topics is being maintained
+[here](https://github.com/alexanderblnf/conversational-search-dataset/wiki/Supported-Topics).
+The output is stored in `stackexchange_dump/{topic}/data.json`. To obtain a set of datasets 
+from a handpicked list of domains, please run use the `run.all.sh` script. 
+
+
+In order to merge multiple json datasets into a **single, multi-domain dataset**, you are required
+to run `python run.py merge {topic1},{topic2},{topic3}...{topicN}`, where `{topicX}` is a topic
+for which there is already a constructed json dataset. The output is stored in 
+`stackexchange_dump/merged_{allocation}.tsv`, where `{allocation}` is either train, dev or test.
+ 
+
+#### Building the training datasets
 
 To run the script that turns the JSON file to a training dataset similar to 
 [MSDialog - ResponseRank](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
-`python run.py training {topic}`. 
-The output is stored in `stackexchange_dump/{topic}/data_{allocation}.tsv`,
-where `allocation` is either train, dev or test. 
-
-There is also an utility script named `merge_topics.sh`, which accepts as many
-topics as parameters. The script merges the `.tsv` files into one
-(for each allocation) and provides a lookup file to identify which part of the
-final file belongs to which topic.
-
-Example: `./merge_topics bicycles movies` will create 1 file, found at 
-`./stackexchange_dump/merge_bicycles_movies_{allocation}.tsv` that contains 
-all the contexts from the 2 datasets. The `merge_bicycles_movies_{allocation}_lookup` file 
-contains the positions at which each topic begins. 
+`python run.py training [easy]`. Without specifying `easy`, the resulting dataset will contain
+50 negative samples (*sampled from all domains*) for each true agent response. In case the flag is
+specified, only 10 negative samples (*sampled from the same domain as the agent response*) will be
+added for each true agent response. 
+The output is stored in `stackexchange_dump/data_{allocation}.tsv`. A lookup `.txt` file is generated
+for each file that contains for each row the ID of the original conversation in the source JSON. 
 
 ##### JSON data format:
 

@@ -45,7 +45,8 @@ class BM25Helper:
 
     def get_negative_samples(self, query: str,  n: int) -> list:
         """
-        Given a query, this function returns the top n responses by applying BM25
+        Given a query, this function returns a sample of n responses from the top 1000 potential responses obtained
+        by applying BM25
         :param query:
         :param n:
         :return:

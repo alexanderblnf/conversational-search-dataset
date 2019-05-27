@@ -78,11 +78,11 @@ class JsonDialogue:
     @classmethod
     def __process_text(cls, text: str) -> str:
         """
-        Processes the utterance by stripping all the HTML tags (except links) and removing all the newlines.
+        Processes the utterance by stripping all the HTML tags (except links, quotes, code) and removing
+        all the newlines.
         :param text:
         :return:
         """
-        # clean_text = re.sub('<(?!\/?a(?=>|\s.*>))\/?.*?>', '', text)
         clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code)(?!/blockquote)(?!/pre)(?!/code).*?>', '', text)
         return clean_text.replace('\n', '').replace('\r', '').replace('\t', '')
 
