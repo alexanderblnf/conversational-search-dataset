@@ -83,8 +83,10 @@ class JsonDialogue:
         :param text:
         :return:
         """
-        clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code)(?!/blockquote)(?!/pre)(?!/code).*?>', '', text)
-        return clean_text.replace('\n', '').replace('\r', '').replace('\t', '')
+        clean_text = re.sub('<(?!a)(?!br)(?!blockquote)(?!pre)(?!code)(?!/blockquote)(?!/pre)(?!/code).*?>', '', text)\
+            .replace('\n', '').replace('\r', '').replace('\t', '')
+
+        return clean_text if clean_text else '<Placeholder Response>'
 
     @classmethod
     def __format_utterance(cls,
