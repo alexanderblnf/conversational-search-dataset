@@ -4,6 +4,7 @@ import numpy as np
 import time
 import os
 import itertools as it
+import argparse
 
 
 from nltk.tokenize import word_tokenize
@@ -133,6 +134,12 @@ def cv_worker(work_num):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_cpus', help='Selects the number of cpus to use', required=True)
+
+    args = parser.parse_args()
+
+
     if not os.path.isfile('processed_df.pkl'):
         print('Building dataframe...')
         initial_df = pd.read_json(get_json_data())
@@ -163,7 +170,7 @@ if __name__ == '__main__':
     combinations = list(it.product(*(param_grid[name] for name in all_keys)))
     print('Total Combinations: ' + str(len(combinations)))
 
-    p = Pool(processes=8)
+    p = Pool(processes=int(args.num_cpus))
     data = p.map(cv_worker, [i for i in range(8)])
     p.close()
 
