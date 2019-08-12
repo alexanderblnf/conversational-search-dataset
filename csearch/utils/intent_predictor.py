@@ -171,7 +171,7 @@ if __name__ == '__main__':
     print('Total Combinations: ' + str(len(combinations)))
 
     p = Pool(processes=int(args.num_cpus))
-    data = p.map(cv_worker, [i for i in range(combinations)])
+    data = p.map(cv_worker, [i for i in range(len(combinations))])
     p.close()
 
     np.savetxt('cv_result.out', data)
