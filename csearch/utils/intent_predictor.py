@@ -163,7 +163,7 @@ if __name__ == '__main__':
     param_grid = {
         'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1],
         'n_estimators': [80, 100, 200, 250, 300, 500],
-        'max_depth': [1, 2, 3, 5],
+        'max_depth': [1, 3, 5, 7],
     }
 
     all_keys = list(param_grid.keys())
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     print('Total Combinations: ' + str(len(combinations)))
 
     p = Pool(processes=int(args.num_cpus))
-    data = p.map(cv_worker, [i for i in range(8)])
+    data = p.map(cv_worker, [i for i in range(combinations)])
     p.close()
 
     np.savetxt('cv_result.out', data)
