@@ -18,6 +18,8 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold
 
 from pandas import DataFrame
@@ -123,11 +125,14 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
 
 def cv_worker(work_num):
     entry = combinations[work_num]
+    # base_clf = GradientBoostingClassifier(learning_rate=entry[0], n_estimators=entry[1], max_depth=entry[2])
+    base_clf = AdaBoostClassifier(n_estimators=entry[0],
+                                  learning_rate=entry[1],
+                                  base_estimator=DecisionTreeClassifier(max_depth=entry[2])
+                                  )
+    clf = OneVsRestClassifier(base_clf)
 
-    clf = OneVsRestClassifier(
-        GradientBoostingClassifier(learning_rate=entry[0], n_estimators=entry[1], max_depth=entry[2])
-    )
-    print('Combination ' + str(work_num))
+    print('Combination ' + str(work_num), flush=True)
     mean_accuracy, std_accuracy = custom_cv(clf, processed_ds, labels, 2, work_num * 10, tfidf_vectorizer, encoder)
 
     return [work_num, mean_accuracy, std_accuracy]
@@ -160,10 +165,15 @@ if __name__ == '__main__':
     encoder = MultiLabelBinarizer()
     encoder.fit(labels)
 
+    # param_grid = {
+    #     'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1],
+    #     'n_estimators': [80, 100, 200, 250, 300, 500],
+    #     'max_depth': [1, 3, 5, 7],
+    # }
     param_grid = {
-        'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1],
-        'n_estimators': [80, 100, 200, 250, 300, 500],
-        'max_depth': [1, 3, 5, 7],
+        'n_estimators': [50, 100, 200, 250, 300, 500],
+        'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.9],
+        'max_depth': [1, 3, 5, 7]
     }
 
     all_keys = list(param_grid.keys())
