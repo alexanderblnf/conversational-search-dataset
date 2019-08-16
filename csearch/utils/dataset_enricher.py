@@ -119,7 +119,7 @@ if __name__ == '__main__':
     elif args.mode == 'crawl_content':
         print('Crawling each URL for content')
         pages_content = {}
-        num_cpus = args.num_cpus if args.num_cpus else 8
+        num_cpus = int(args.num_cpus) if args.num_cpus else 8
         chunk_per_cpu = round(len(json_data) / num_cpus)
         json_data_keys = np.array(list(json_data.keys()))
 
