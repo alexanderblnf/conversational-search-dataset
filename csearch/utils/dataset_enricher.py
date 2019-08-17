@@ -43,7 +43,7 @@ def add_links_to_conversation(utterances: list):
 def is_valid_url(url: str) -> bool:
     try:
         headers = requests.head(url, timeout=5).headers
-    except (ReadTimeout, ConnectionError, UnicodeError) as e:
+    except:
         return False
 
     if 'content-type' not in headers:
@@ -68,7 +68,6 @@ def init_article_config():
 def extract_content_from_url(url: str):
     final_url = url if url.startswith('http') else 'http://' + url
 
-    print(final_url)
     if not is_valid_url(final_url):
         return INVALID_RESPONSE
 
@@ -82,7 +81,7 @@ def extract_content_from_url(url: str):
             'raw_html': article.html,
             'text': article.text
         }
-    except ArticleException:
+    except:
         return INVALID_RESPONSE
 
 
