@@ -43,9 +43,7 @@ def add_links_to_conversation(utterances: list):
 def is_valid_url(url: str) -> bool:
     try:
         headers = requests.head(url, timeout=5).headers
-    except ReadTimeout:
-        return False
-    except ConnectionError:
+    except (ReadTimeout, ConnectionError, UnicodeError) as e:
         return False
 
     if 'content-type' not in headers:
