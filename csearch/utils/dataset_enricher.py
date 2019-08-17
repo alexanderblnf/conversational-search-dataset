@@ -64,10 +64,13 @@ def init_article_config():
     config = Config()
     config.fetch_images = False
 
+    return config
+
 
 def extract_content_from_url(url: str):
     final_url = url if url.startswith('http') else 'http://' + url
 
+    print(final_url)
     if not is_valid_url(final_url):
         return INVALID_RESPONSE
 
@@ -97,7 +100,7 @@ def crawl_all_conversation_urls(utterances: list):
 
 def crawl_worker(cpu_id: int, keys):
     thread_pages_content = {}
-    keys_range = tqdm(keys, position=cpu_id)
+    keys_range = tqdm(keys, position=cpu_id, desc='CPU ' + str(cpu_id))
     for key in keys_range:
         current_conversation = json_data[key]
         current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
