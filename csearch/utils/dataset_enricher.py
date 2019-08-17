@@ -8,6 +8,7 @@ from urlextract import URLExtract
 from tqdm import tqdm
 from newspaper import Article
 from newspaper import ArticleException
+from newspaper import Config
 from pathlib import PurePath
 from urllib.parse import urlparse
 from requests.exceptions import MissingSchema, ConnectionError
@@ -41,7 +42,7 @@ def add_links_to_conversation(utterances: list):
 
 def is_valid_url(url: str) -> bool:
     try:
-        headers = requests.head(url).headers
+        headers = requests.head(url, timeout=5).headers
     except ConnectionError:
         return False
 
@@ -57,6 +58,11 @@ def is_valid_url(url: str) -> bool:
     return True
 
 
+def init_article_config():
+    config = Config()
+    config.fetch_images = False
+
+
 def extract_content_from_url(url: str):
     final_url = url if url.startswith('http') else 'http://' + url
 
@@ -64,8 +70,8 @@ def extract_content_from_url(url: str):
         return INVALID_RESPONSE
 
     try:
-        article = Article(final_url)
-        article.download()
+        article = Article(final_url, config=init_article_config())
+        article.download(recursion_counter=1)
         article.parse()
 
         return {
