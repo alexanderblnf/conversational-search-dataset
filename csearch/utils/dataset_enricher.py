@@ -11,7 +11,7 @@ from newspaper import ArticleException
 from newspaper import Config
 from pathlib import PurePath
 from urllib.parse import urlparse
-from requests.exceptions import MissingSchema, ConnectionError
+from requests.exceptions import MissingSchema, ConnectionError, ReadTimeout
 from multiprocessing import Pool
 
 
@@ -43,6 +43,8 @@ def add_links_to_conversation(utterances: list):
 def is_valid_url(url: str) -> bool:
     try:
         headers = requests.head(url, timeout=5).headers
+    except ReadTimeout:
+        return False
     except ConnectionError:
         return False
 
