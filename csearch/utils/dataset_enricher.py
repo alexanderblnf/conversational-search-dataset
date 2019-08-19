@@ -46,13 +46,13 @@ def is_valid_url(url: str) -> bool:
     except:
         return False
 
-    if 'content-type' not in headers:
-        path = PurePath(urlparse(url).path)
-        ext = path.suffix[1:]
+    if 'content-type' in headers and 'text/html' not in headers['content-type']:
+        return False
 
-        if ext and ext not in ['htm', 'html', 'php', 'asp']:
-            return False
-    elif 'text/html' not in headers['content-type']:
+    path = PurePath(urlparse(url).path)
+    ext = path.suffix[1:]
+
+    if ext and ext not in ['htm', 'html', 'php', 'asp']:
         return False
 
     return True
@@ -73,12 +73,11 @@ def extract_content_from_url(url: str):
 
     try:
         article = Article(final_url, config=init_article_config())
-        article.download(recursion_counter=1)
+        article.download()
         article.parse()
 
         return {
             'valid': True,
-            'raw_html': article.html,
             'text': article.text
         }
     except:
