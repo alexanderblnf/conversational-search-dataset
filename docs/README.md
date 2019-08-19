@@ -1,29 +1,32 @@
-# MANtIS - a conversational search dataset
+# MANtIS - a multi-domain information seeking dialogues datase
 ##### This repo contains the implementation for obtaining a conversational search dataset
 
-### Introduction
+## Introduction
 The dataset contains conversations from the  community  question-answering portal [Stack Exchange](https://stackexchange.com)
 as a starting point, given the fact that the data  dump  is  [publicly  available](https://archive.org/details/stackexchange),
-it  is  large-scale (more than 20M questions), it covers diverse  domains  (so-called sites)  including
+it  is  large-scale (more than 20M questions), it covers diverse domains including
 [DIY](https://diy.stackexchange.com/), [traveling](https://travel.stackexchange.com) and a range of IT and computer science 
 domains (175 as of 05/2019). Moreover, the information needs are often complex as posing a question on Stack Exchange
 usually means that a simple websearch is not enough to find a suitable answer.
 
-For our version of the dataset,  we  consider  14  diverse  sites:
-* apple - 5,645 dialogues
-* askubuntu - 17,755
-* dba - 5,197
-* diy - 1,528
-* electronics - 10,690
-* english - 3,231
-* gaming - 2,982
-* gis - 9,095
-* physics - 7,826
-* scifi - 2,214
-* security - 3,752
-* stats - 7,676
-* travel - 1,433
-* worldbuilding - 1,300
+For our version of the dataset,  we  consider  14  diverse  domains:
+
+| Domain        | No. of dialogues |
+|---------------|------------------|
+| apple 	    | 5,645 		   |
+| askubuntu     | 17,755		   |
+| dba 	        | 5,197 		   |
+| diy 	        | 1,528 		   |
+| electronics   | 10,690 		   |
+| english       | 3,231 		   |
+| gaming        | 2,982 		   |
+| gis 		    | 9,095 		   |
+| physics 	    | 7,826 		   |
+| scifi 		| 2,214 		   |
+| security 	    | 3,752 		   |
+| stats 		| 7,676 		   |
+| travel 		| 1,433 		   |
+| worldbuilding | 1,300 		   |
 
 The restricting factor for our data collection effort is the manual utterance intent labeling process. However, 
 the scripts can easily be extended with more sites.
@@ -36,9 +39,24 @@ conditions that must hold for each conversation:
 4. The  conversation has not been marked as _Spam_ or _Offensive_.
 5. The  conversation has not been  edited or marked as deprecated.
 6. If the final turn in the conversation belongs to the asker, it contains _positive feedback_ (identified using the
-[vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html).
+[vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html)).
 
-### Using the code
+## Intent labels dataset
+To further enrich the dataset, we have employed annotators to mark a subset of the dataset with intent labels. Throughout this dataset, you will encounter the following type of intents:
+
+| Category	|	Description	|	Example snippet |
+|-----------|---------------|-------------------|
+| Further Details	|	A user (either asking or answering user) provides more details.	|	Hi. Sorry for taking so long to reply. The information you need is ...|
+| Follow Up Question	|	Asking user asks one or more follow up questions about relevant issues.	|	Thanks. I really have one more simple question -- if I ...|
+| Information Request	|	A user (either asking or answering user) is asking for clarifications or further information.	|	What is the make and model of the computer? Have you tried installing ... Your advice is not detailed enough. I'm not sure what you mean by ... |
+| Potential Answer	|	A potential solution, provided by the answering user.	|	Hi. To change the PIN on your phone, you may follow the steps below:..|
+| Positive Feedback	|	Asking user provides positive feedback about the offered solution.	|	Hi. That was exactly what I needed. Thanks!|
+| Negative Feedback	|	Asking user provides negative feedback about the offered solution.	|	Thanks for you help! However, the fix did not work..|
+| Greetings / Gratitude	|	A user (asking or answering user) offers a greeting or expresses gratitude.	|	Thank you for all the responses!|
+| Other	|	Anything that does not fit into the above categories.	|	:) :) :) . *shrug*|
+
+
+## Using the code
 #### Installing dependencies
 In order to install all the required external dependencies, please run `pip install -r requirements.txt` in the root folder of the project. 
 We recommend using a virtual enviroment with Python >= 3.6.8. Python 2 is not supported.
@@ -90,6 +108,8 @@ for which there is already a constructed json dataset. The output is stored in
 #### Building the training datasets
 
 The project also offers an utility that builds datasets to be used for training a neural network for response ranking. 
+Firstly, each conversation is split into "contexts" that have at least 2 utterances per user. 
+
 To run the script that turns the JSON file to a training dataset similar to 
 [MSDialog - ResponseRank](https://ciir.cs.umass.edu/downloads/msdialog/), you need to run
 `python run.py training [easy]`. Without specifying `easy`, the resulting dataset will contain
