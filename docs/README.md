@@ -42,7 +42,7 @@ conditions that must hold for each conversation:
 [vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html)).
 
 The example below showcases 2 examples of conversations that are extracted after the entire processing pipeline is applied.
-<img src="img/MANtIS_DatasetExamples.png" width="50%">
+<img src="img/MANtIS_DatasetExamples.png">
 
 ## Intent labels dataset
 To further enrich the dataset, we have employed annotators to mark a subset of 1356 utterances from the dataset with intent labels. Throughout this dataset, you will encounter the following type of intents:
@@ -60,7 +60,7 @@ To further enrich the dataset, we have employed annotators to mark a subset of 1
 
 The distribution of labels across all annotated conversations is shown in the figure below, with Original Question, Potential Answer and Further Details being the most frequent labels. 21% of utterances were annotated with more than one label, indicating the multi-intent nature of our dataset.
 <!--- ![intent distribution](img/barplot_intents.png) --->
-<img src="img/barplot_intents.png" width="50%">
+<img src="img/barplot_intents.png">
 
 
 
