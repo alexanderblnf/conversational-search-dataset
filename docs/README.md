@@ -78,7 +78,8 @@ Afterwards, for each such context, we generate more contexts in which the curren
 * `utterance_{x}` is a utterance of one of the 2 users
 * `candidate_response` is the answer of the current context
 
-The mantis 10 response ranking dataset is `.tsv` format is available for download [here](https://drive.google.com/file/d/1nf_JRR7zIcCLrzvL_vRsuzBxDcD_3g6N/view?usp=sharing)
+The mantis_10 response ranking dataset in `.tsv` format is available for download [here](https://drive.google.com/file/d/1nf_JRR7zIcCLrzvL_vRsuzBxDcD_3g6N/view?usp=sharing)
+The mantis_50 response ranking dataset in `.tsv` format is available for download [here](https://drive.google.com/file/d/11_Um52HzjC41M9S-xSAX6HZP25bmi2oq/view?usp=sharing)
 
 ## Using the code
 #### Installing dependencies
