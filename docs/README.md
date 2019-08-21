@@ -1,5 +1,4 @@
 # MANtIS - a multi-domain information seeking dialogues datase
-##### This repo contains the implementation for obtaining a conversational search dataset
 
 ## Introduction
 The dataset contains conversations from the  community  question-answering portal [Stack Exchange](https://stackexchange.com)
@@ -41,11 +40,11 @@ conditions that must hold for each conversation:
 6. If the final turn in the conversation belongs to the asker, it contains _positive feedback_ (identified using the
 [vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html)).
 
-The example below showcases 2 examples of conversations that are extracted after the entire processing pipeline is applied.
+The example below showcases 1 conversation example that is extracted after the entire processing pipeline is applied.
 <br><br>
 <img src="img/MANtIS_DatasetExamples.png">
 
-## Intent labels dataset
+## Intent labeled dataset
 To further enrich the dataset, we have employed annotators to mark a subset of 1356 utterances from the dataset with intent labels. Throughout this dataset, you will encounter the following type of intents:
 
 | Category	|	Description	|	Example snippet |
