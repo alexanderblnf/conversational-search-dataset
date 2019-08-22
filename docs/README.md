@@ -3,33 +3,14 @@
 ## Introduction
 MANtIS is a multi-domain dialogue dataset contatining information-seeking interactions from the community  question-answering portal [Stack Exchange](https://stackexchange.com). Unlike previous information-seeking dialogue datasets that focus on only one domain, MANtIS has __diverse__ conversations from 14 different sites, such as *physics*, *travel* and *worldbuilding*. Additionaly, all dialogues have a url, providing __grounding__ to the conversations. It can be used for the following tasks: conversation response ranking/generation and intent prediction. We provide manually annotated intent labels for more than 1300 multi-turn dialogues. See an example of the annotations on the right side of each utterance of a conversation extracted from the *gaming* domain:
 
-<br><br>
 <p align="center">
 <img src="img/MANtIS_DatasetExamples.png">
 </p>
 
-Gray highlights the initial information-need of the information seeker user, yellow highlights the grounding url, pink highlights a clarification question from the information seeker. We perform an additional filtering process to remove unsucessfull convrsations by checking the sentiment score of the last utterance of the information seeker (see green highlight). In summary the conversations of the dataset are multi-turn, multi-intent, containing clarification questions and complex information needs, grounded in web pages and extracted from different domains.
+The conversations of the dataset are multi-turn, multi-intent, containing clarification questions and complex information needs, grounded in web pages and extracted from different domains.
 
 ## MANtIS - complete JSON
-The dataset has over 80,000 dialogues between information seekers and information providers from the following domains of Stack Exchange: apple, askubuntu, dba, diy, electronics, english, gaming, gis, physics, scifi, security, stats, travel and worldbuilding. The processed JSON dataset is available for download [here](https://drive.google.com/file/d/1cWEbTC4klLQDLej--IG2OAZIT4AX549A/view?usp=sharing). It is split in 3 .JSON files, corresponding to the train/validation/test splits. The JSON format is the following :
-
-* __dialog_id__: a unique id for a dialog - ids are consecutive
-* __category__: domain to which the dialogue belongs (for now, *Apple* is the only category)
-* __title__: dialog title from the forum
-* __dialog_time__: the time that the first utterance of the dialog was posted
-* __utterances__: a list of utterances in this dialog
-    * __actor_type__: *user* or *agent* (“user” refers to the information seeker that initiates the conversation. 
-    All the other conversation participants are considered as “agents”)
-    * __utterance_pos__: the utterance position in the dialog (starts from 1)
-    * __utterance__: the content of the utterance
-    * __votes__: number of votes the answer received from the community
-    * __utterance_time__: the time that the utterance was posted
-    * __is_answer__: whether the utterance is selected as the best answer by the community
-    * __id__: the id of the original post/comment
-     (for comments, the syntax is {post_id}_{comment_id})
-
-In order to ensure that each conversation in our dataset follows our set of criteria, we have devised a list of six
-conditions that must hold for each conversation:
+The dataset has over 80,000 dialogues between information seekers and information providers from the following domains of Stack Exchange: apple, askubuntu, dba, diy, electronics, english, gaming, gis, physics, scifi, security, stats, travel and worldbuilding. In order to ensure that each conversation in our dataset follows our set of criteria, we have devised a list of six conditions that must hold for each conversation:
 
 1. The entire conversation takes place between _exactly_ two users (the asker who starts off the conversation and the provider who attempts to fulfill the information need).
 2. The conversation consists of _at least_ 2 turns per user.
@@ -39,9 +20,26 @@ conditions that must hold for each conversation:
 6. If the final turn in the conversation belongs to the asker, it contains _positive feedback_ (identified using the
 [vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html)).
 
+The processed JSON dataset is available for download [here](https://drive.google.com/file/d/1cWEbTC4klLQDLej--IG2OAZIT4AX549A/view?usp=sharing), having following format:
+
+* __dialog_id__: a unique id for a dialog - ids are consecutive
+* __category__: domain to which the dialogue belongs
+* __title__: dialog title from the forum
+* __dialog_time__: the time that the first utterance of the dialog was posted
+* __utterances__: a list of utterances in this dialog
+    * __actor_type__: *user* or *agent* (“user” refers to the information seeker that initiates the conversation. The information provider is considered as “agent”)
+    * __utterance_pos__: the utterance position in the dialog (starts from 1)
+    * __utterance__: the content of the utterance
+    * __votes__: number of votes the answer received from the community
+    * __utterance_time__: the time that the utterance was posted
+    * __is_answer__: whether the utterance is selected as the best answer by the community
+    * __id__: the id of the original post/comment
+     (for comments, the syntax is {post_id}_{comment_id})
+
+
 ## MANtIS - intent labeled JSON
 
-To further enrich the dataset, we have employed 2 specialist annotators to mark a subset of 1356 utterances (Krippendorff's agreement of 0.71) from the dataset with intent labels. The following schema was used to label all utterances :
+To further enrich the dataset, we have employed 2 specialist annotators to mark a subset of 1356 dialogues (Krippendorff's agreement of 0.71) from the dataset with intent labels for each utterance. The following schema was used to label all utterances :
 
 | Intent	|	Description	|	Example snippet |
 |-----------|---------------|-------------------|
@@ -55,9 +53,9 @@ To further enrich the dataset, we have employed 2 specialist annotators to mark 
 | Other	|	Anything that does not fit into the above categories.	|	:) :) :) . *shrug*|
 
 The distribution of labels across all annotated conversations is shown in the figure below, with Original Question, Potential Answer and Further Details being the most frequent labels. 21% of utterances were annotated with more than one label, indicating the multi-intent nature of our dataset.
-<br><br>
+
 <p align="center">
-<img width="50%" height="50%" src="img/barplot_intents.png">
+<img width="75%" height="75%" src="img/barplot_intents.png">
 </p>
 
 The JSON dataset with the labeled intents is available for download [here](https://drive.google.com/file/d/1JI9VAuHllyZxr7XhTYLhx7iI2EVd3-a4/view?usp=sharing)
@@ -114,7 +112,7 @@ for which there is already a constructed json dataset. The output is stored in
 ##### JSON data format:
 
 * __dialog_id__: a unique id for a dialog - ids are consecutive
-* __category__: domain to which the dialogue belongs (for now, *Apple* is the only category)
+* __category__: domain to which the dialogue belongs
 * __title__: dialog title from the forum
 * __dialog_time__: the time that the first utterance of the dialog was posted
 * __utterances__: a list of utterances in this dialog
