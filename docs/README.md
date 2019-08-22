@@ -1,55 +1,49 @@
-# MANtIS - a multi-domain information seeking dialogues datase
+# MANtIS - a multi-domain information seeking dialogues dataset
 
 ## Introduction
-The dataset contains conversations from the  community  question-answering portal [Stack Exchange](https://stackexchange.com)
-as a starting point, given the fact that the data  dump  is  [publicly  available](https://archive.org/details/stackexchange),
-it  is  large-scale (more than 20M questions), it covers diverse domains including
-[DIY](https://diy.stackexchange.com/), [traveling](https://travel.stackexchange.com) and a range of IT and computer science 
-domains (175 as of 05/2019). Moreover, the information needs are often complex as posing a question on Stack Exchange
-usually means that a simple websearch is not enough to find a suitable answer.
+MANtIS is a multi-domain dialogue dataset contatining information-seeking interactions from the community  question-answering portal [Stack Exchange](https://stackexchange.com). Unlike previous information-seeking dialogue datasets that focus on only one domain, MANtIS has __diverse__ conversations from 14 different sites, such as *physics*, *travel* and *worldbuilding*. Additionaly, all dialogues have a url, providing __grounding__ to the conversations. It can be used for the following tasks: conversation response ranking/generation and intent prediction. We provide manually annotated intent labels for more than 1300 multi-turn dialogues. See an example of the annotations on the right side of each utterance of a conversation extracted from the *gaming* domain:
 
-For our version of the dataset,  we  consider  14  diverse  domains:
+<br><br>
+<p align="center">
+<img src="img/MANtIS_DatasetExamples.png">
+</p>
 
-| Domain        | No. of dialogues |
-|---------------|------------------|
-| apple 	    | 5,645 		   |
-| askubuntu     | 17,755		   |
-| dba 	        | 5,197 		   |
-| diy 	        | 1,528 		   |
-| electronics   | 10,690 		   |
-| english       | 3,231 		   |
-| gaming        | 2,982 		   |
-| gis 		    | 9,095 		   |
-| physics 	    | 7,826 		   |
-| scifi 		| 2,214 		   |
-| security 	    | 3,752 		   |
-| stats 		| 7,676 		   |
-| travel 		| 1,433 		   |
-| worldbuilding | 1,300 		   |
+Gray highlights the initial information-need of the information seeker user, yellow highlights the grounding url, pink highlights a clarification question from the information seeker. We perform an additional filtering process to remove unsucessfull convrsations by checking the sentiment score of the last utterance of the information seeker (see green highlight). In summary the conversations of the dataset are multi-turn, multi-intent, containing clarification questions and complex information needs, grounded in web pages and extracted from different domains.
 
-The restricting factor for our data collection effort is the manual utterance intent labeling process. However, 
-the scripts can easily be extended with more sites.
+## MANtIS - complete JSON
+The dataset has over 80,000 dialogues between information seekers and information providers from the following domains of Stack Exchange: apple, askubuntu, dba, diy, electronics, english, gaming, gis, physics, scifi, security, stats, travel and worldbuilding. The processed JSON dataset is available for download [here](https://drive.google.com/file/d/1cWEbTC4klLQDLej--IG2OAZIT4AX549A/view?usp=sharing). It is split in 3 .JSON files, corresponding to the train/validation/test splits. The JSON format is the following :
+
+* __dialog_id__: a unique id for a dialog - ids are consecutive
+* __category__: domain to which the dialogue belongs (for now, *Apple* is the only category)
+* __title__: dialog title from the forum
+* __dialog_time__: the time that the first utterance of the dialog was posted
+* __utterances__: a list of utterances in this dialog
+    * __actor_type__: *user* or *agent* (“user” refers to the information seeker that initiates the conversation. 
+    All the other conversation participants are considered as “agents”)
+    * __utterance_pos__: the utterance position in the dialog (starts from 1)
+    * __utterance__: the content of the utterance
+    * __votes__: number of votes the answer received from the community
+    * __utterance_time__: the time that the utterance was posted
+    * __is_answer__: whether the utterance is selected as the best answer by the community
+    * __id__: the id of the original post/comment
+     (for comments, the syntax is {post_id}_{comment_id})
 
 In order to ensure that each conversation in our dataset follows our set of criteria, we have devised a list of six
 conditions that must hold for each conversation:
+
 1. The entire conversation takes place between _exactly_ two users (the asker who starts off the conversation and the provider who attempts to fulfill the information need).
 2. The conversation consists of _at least_ 2 turns per user.
 3. At least one of the answerer’s utterances contains a hyperlink (providing grounding).
 4. The  conversation has not been marked as _Spam_ or _Offensive_.
-5. The  conversation has not been  edited or marked as deprecated.
+5. The  conversation has not been edited or marked as deprecated.
 6. If the final turn in the conversation belongs to the asker, it contains _positive feedback_ (identified using the
 [vader score](https://www.nltk.org/_modules/nltk/sentiment/vader.html)).
 
-The example below showcases 1 conversation example that is extracted after the entire processing pipeline is applied.
-<br><br>
-<img src="img/MANtIS_DatasetExamples.png">
+## MANtIS - intent labeled JSON
 
-The processed JSON dataset is available for download [here](https://drive.google.com/file/d/1cWEbTC4klLQDLej--IG2OAZIT4AX549A/view?usp=sharing). It is split in 3 .JSON files, corresponding to the train/validation/test splits.
+To further enrich the dataset, we have employed 2 specialist annotators to mark a subset of 1356 utterances (Krippendorff's agreement of 0.71) from the dataset with intent labels. The following schema was used to label all utterances :
 
-## Intent labeled dataset
-To further enrich the dataset, we have employed annotators to mark a subset of 1356 utterances from the dataset with intent labels. Throughout this dataset, you will encounter the following type of intents:
-
-| Category	|	Description	|	Example snippet |
+| Intent	|	Description	|	Example snippet |
 |-----------|---------------|-------------------|
 | Further Details	|	A user (either asking or answering user) provides more details.	|	Hi. Sorry for taking so long to reply. The information you need is ...|
 | Follow Up Question	|	Asking user asks one or more follow up questions about relevant issues.	|	Thanks. I really have one more simple question -- if I ...|
@@ -62,16 +56,17 @@ To further enrich the dataset, we have employed annotators to mark a subset of 1
 
 The distribution of labels across all annotated conversations is shown in the figure below, with Original Question, Potential Answer and Further Details being the most frequent labels. 21% of utterances were annotated with more than one label, indicating the multi-intent nature of our dataset.
 <br><br>
-<img src="img/barplot_intents.png">
+<p align="center">
+<img width="50%" height="50%" src="img/barplot_intents.png">
+</p>
 
 The JSON dataset with the labeled intents is available for download [here](https://drive.google.com/file/d/1JI9VAuHllyZxr7XhTYLhx7iI2EVd3-a4/view?usp=sharing)
 
-## Response ranking dataset
+## MANtIS - response-ranking format
 
-The project also offers an utility that builds datasets to be used for training a neural network for response ranking. 
-Firstly, each conversation is split into chunks of consecutive utterances that have at least 2 utterances per user and where the last utterance is generated by the _provider_. Therefore, if a conversation has 3 turns per user, it will have 2 possible contexts (the first 2 and the first 3 utterances per user). 
+We also provide the dataset in a format suited for directly training a neural ranking networks.  Firstly, each conversation is split into chunks of consecutive utterances that have at least 2 utterances per user and where the last utterance is generated by the information _provider_. Therefore, if a conversation has 3 turns per user, it will have 2 possible contexts (the first 2 and the first 3 utterances per user). 
 
-Afterwards, for each such context, we generate more contexts in which the current last utterance of the provider is replaced with a negative sample obtained by using [BM25](https://radimrehurek.com/gensim/summarization/bm25.html). For the the mantis_10 variant of the dataset, we randomly generate 10 more negative samples from the top 1000 results of BM25, whereas for the mantis_50 variant we generate 50 more samples. The newly obtained datasets are saved in a `.tsv` format in the following format:
+Afterwards, for each such context, we generate negative sampled instances in which the current last utterance of the provider is replaced with a negative sample obtained by using [BM25](https://radimrehurek.com/gensim/summarization/bm25.html) with the correct answer as query. For the the mantis_10 variant of the dataset, we randomly generate 10 negative samples from the top 1000 results of BM25, whereas for the mantis_50 variant we generate 50 negative samples. The newly obtained datasets are saved in a `.tsv` format in the following format:
 
 `label \t utterance_1 \t utterance_2 \t ...... \t candidate_response`, where:
 * `label` is 1 when the `candidate_response` is the true response and 0 when it is a negative sample
@@ -81,7 +76,10 @@ Afterwards, for each such context, we generate more contexts in which the curren
 The mantis_10 response ranking dataset in `.tsv` format is available for download [here](https://drive.google.com/file/d/1nf_JRR7zIcCLrzvL_vRsuzBxDcD_3g6N/view?usp=sharing)
 The mantis_50 response ranking dataset in `.tsv` format is available for download [here](https://drive.google.com/file/d/11_Um52HzjC41M9S-xSAX6HZP25bmi2oq/view?usp=sharing)
 
-## Using the code
+## Using the code 
+
+Considering that Stack Exchange has more than 170 domains and we processed 14 of thoose, we also provide the source code for extracting the dataset for any of the existing domains.
+
 #### Installing dependencies
 In order to install all the required external dependencies, please run `pip install -r requirements.txt` in the root folder of the project. 
 We recommend using a virtual enviroment with Python >= 3.6.8. Python 2 is not supported.
