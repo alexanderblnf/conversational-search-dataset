@@ -66,3 +66,10 @@ class BM25Helper:
                 unique_responses.append(candidate_element)
 
         return unique_responses
+
+    def get_top_n(self, query: str, n: int) -> list:
+        processed_query = self.__bm25_pre_process_utterance(query)
+        scores = np.array(self.model.get_scores(processed_query))
+        top_queries = np.argpartition(scores, -n)[-n:]
+
+        return top_queries

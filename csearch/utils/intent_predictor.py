@@ -15,6 +15,7 @@ from nltk.corpus import wordnet as wn
 from collections import defaultdict
 
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -87,10 +88,12 @@ def custom_accuracy(y_true, y_pred):
     accuracies = []
     for index, true_labels in enumerate(y_true):
         predicted_labels = y_pred[index]
-        label_sum = list(map(add, true_labels, predicted_labels))
-        acc = label_sum.count(2) / (label_sum.count(2) + label_sum.count(1))
-        accuracies.append(acc)
-
+        num_correct = 0
+        for lbl_index, true_label in enumerate(true_labels):
+            if true_label in predicted_labels:
+                num_correct += 1
+        accuracies.append(num_correct / len(predicted_labels) if num_correct > 0 else 0)
+    print(np.mean(accuracies))
     return np.mean(accuracies)
 
 
@@ -100,12 +103,15 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
     f1_macro = []
     for i in range(num_iterations):
         kf = KFold(n_splits=10, shuffle=True, random_state=random_state + i * int(round(time.time()) / 1000))
-        for train_index, test_index in kf.split(processed_ds):
+        for index, (train_index, test_index) in enumerate(kf.split(processed_ds)):
+            print('Split ' + str(index))
             x_train, x_test = tfidf_vectorizer.transform(processed_ds[train_index]), \
                               tfidf_vectorizer.transform(processed_ds[test_index])
             y_train, y_test = label_encoder.transform(labels[train_index]), label_encoder.transform(labels[test_index])
             y_predicted = clf.fit(x_train, y_train).predict(x_test)
-            custom_accuracy_avg.append(custom_accuracy(y_test, y_predicted))
+            y_t = label_encoder.inverse_transform(y_test)
+            y_p = label_encoder.inverse_transform(y_predicted)
+            custom_accuracy_avg.append(custom_accuracy(y_t, y_p))
             f1_micro.append(f1_score(y_test, y_predicted, average='micro'))
             f1_macro.append(f1_score(y_test, y_predicted, average='macro'))
 
@@ -117,19 +123,19 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
 
 
 
-# def cv_worker(work_num):
-#     entry = combinations[work_num]
-#     # base_clf = GradientBoostingClassifier(learning_rate=entry[0], n_estimators=entry[1], max_depth=entry[2])
-#     base_clf = AdaBoostClassifier(n_estimators=entry[0],
-#                                   learning_rate=entry[1],
-#                                   base_estimator=DecisionTreeClassifier(max_depth=entry[2])
-#                                   )
-#     clf = OneVsRestClassifier(base_clf)
-#
-#     print('Combination ' + str(work_num), flush=True)
-#     mean_accuracy, std_accuracy = custom_cv(clf, processed_ds, labels, 2, work_num * 10, tfidf_vectorizer, encoder)
-#
-#     return [work_num, mean_accuracy, std_accuracy]
+def cv_worker(work_num):
+    entry = combinations[work_num]
+    # base_clf = GradientBoostingClassifier(learning_rate=entry[0], n_estimators=entry[1], max_depth=entry[2])
+    base_clf = AdaBoostClassifier(n_estimators=entry[0],
+                                  learning_rate=entry[1],
+                                  base_estimator=DecisionTreeClassifier(max_depth=entry[2])
+                                  )
+    clf = OneVsRestClassifier(base_clf)
+
+    print('Combination ' + str(work_num), flush=True)
+    mean_accuracy, std_accuracy = custom_cv(clf, processed_ds, labels, 1, work_num * 10, tfidf_vectorizer, encoder)
+
+    return [work_num, mean_accuracy, std_accuracy]
 
 
 if __name__ == '__main__':
@@ -150,60 +156,63 @@ if __name__ == '__main__':
         preprocessed_df = pd.read_pickle('processed_df.pkl')
 
     processed_ds = preprocessed_df['utterance_final']
-    labels = preprocessed_df['intent']
+    labels = np.array([','.join(label) for label in preprocessed_df['intent'].tolist()])
+    # labels = preprocessed_df['intent']
 
     print('Fitting the TF-IDF Vectorizer and Label Encoder..')
     tfidf_vectorizer = TfidfVectorizer()
     tfidf_vectorizer.fit(processed_ds)
 
+    # encoder = LabelEncoder()
     encoder = MultiLabelBinarizer()
     encoder.fit(labels)
 
-    base_clf = GradientBoostingClassifier(learning_rate=0.1, n_estimators=350, max_depth=11)
+    # base_clf = GradientBoostingClassifier(learning_rate=0.1, n_estimators=350, max_depth=11)
     # base_clf = AdaBoostClassifier(n_estimators=300,
-#                                   learning_rate=0.5,
-#                                   base_estimator=DecisionTreeClassifier(max_depth=1)
-#                                   )
-    clf = OneVsRestClassifier(base_clf)
-    print(custom_cv(clf, processed_ds, labels, 2, 1, tfidf_vectorizer, encoder))
+    #                               learning_rate=0.1,
+    #                               base_estimator=DecisionTreeClassifier(max_depth=1)
+    #                               )
+    # # clf = base_clf
+    # clf = OneVsRestClassifier(base_clf)
+    # print(custom_cv(clf, processed_ds, labels, 1, 1, tfidf_vectorizer, encoder))
 
-    # param_grid = {
-    #     'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1],
-    #     'n_estimators': [80, 100, 200, 250, 300, 500],
-    #     'max_depth': [1, 3, 5, 7],
-    # }
+    param_grid = {
+        'n_estimators': [100, 200, 250, 300, 500],
+        'learning_rate': [0.1, 0.2, 0.3, 0.5],
+        'max_depth': [1, 3, 5, 7],
+    }
     # param_grid = {
     #     'n_estimators': [50, 100, 200, 250, 300, 500],
     #     'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.9],
     #     'max_depth': [1, 3, 5, 7]
     # }
     #
-    # all_keys = list(param_grid.keys())
-    # combinations = list(it.product(*(param_grid[name] for name in all_keys)))
-    # print('Total Combinations: ' + str(len(combinations)))
+    all_keys = list(param_grid.keys())
+    combinations = list(it.product(*(param_grid[name] for name in all_keys)))
+    print('Total Combinations: ' + str(len(combinations)))
     #
-    # p = Pool(processes=int(args.num_cpus))
-    # data = p.map(cv_worker, [i for i in range(len(combinations))])
-    # p.close()
+    p = Pool(processes=int(args.num_cpus))
+    data = p.map(cv_worker, [i for i in range(len(combinations))])
+    p.close()
     #
-    # np.savetxt('cv_result.out', data)
-    #
-    # best_entry = 0
-    # best_index = 0
-    # best_std = 0
-    #
-    # for result_entry in data:
-    #     mean_entry = result_entry[1]
-    #     std_entry = result_entry[2]
-    #     if mean_entry >= best_entry:
-    #         best_entry = mean_entry
-    #         best_index = result_entry[0]
-    #         best_std = std_entry
-    #
-    # print(best_index)
-    # print(best_entry)
-    # print(best_std)
-    # print(combinations[best_index])
+    np.savetxt('cv_result.out', data)
+
+    best_entry = 0
+    best_index = 0
+    best_std = 0
+
+    for result_entry in data:
+        mean_entry = result_entry[1]
+        std_entry = result_entry[2]
+        if mean_entry >= best_entry:
+            best_entry = mean_entry
+            best_index = result_entry[0]
+            best_std = std_entry
+
+    print(best_index)
+    print(best_entry)
+    print(best_std)
+    print(combinations[best_index])
     #
     # processed_ds =
     # x_train, y_train, x_test, y_test = get_split_datasets(preprocessed_df)
