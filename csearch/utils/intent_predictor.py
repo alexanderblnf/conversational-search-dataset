@@ -21,8 +21,10 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.metrics import f1_score
+from sklearn.svm import LinearSVC
 
 from pandas import DataFrame
 from operator import add
@@ -104,7 +106,6 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
     for i in range(num_iterations):
         kf = KFold(n_splits=10, shuffle=True, random_state=random_state + i * int(round(time.time()) / 1000))
         for index, (train_index, test_index) in enumerate(kf.split(processed_ds)):
-            print('Split ' + str(index))
             x_train, x_test = tfidf_vectorizer.transform(processed_ds[train_index]), \
                               tfidf_vectorizer.transform(processed_ds[test_index])
             y_train, y_test = label_encoder.transform(labels[train_index]), label_encoder.transform(labels[test_index])
@@ -125,11 +126,11 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
 
 def cv_worker(work_num):
     entry = combinations[work_num]
-    # base_clf = GradientBoostingClassifier(learning_rate=entry[0], n_estimators=entry[1], max_depth=entry[2])
-    base_clf = AdaBoostClassifier(n_estimators=entry[0],
-                                  learning_rate=entry[1],
-                                  base_estimator=DecisionTreeClassifier(max_depth=entry[2])
-                                  )
+    base_clf = GradientBoostingClassifier(n_estimators=entry[0], learning_rate=entry[1], max_depth=entry[2])
+    # base_clf = AdaBoostClassifier(n_estimators=entry[0],
+    #                               learning_rate=entry[1],
+    #                               base_estimator=DecisionTreeClassifier(max_depth=entry[2])
+    #                               )
     clf = OneVsRestClassifier(base_clf)
 
     print('Combination ' + str(work_num), flush=True)
@@ -172,47 +173,49 @@ if __name__ == '__main__':
     #                               learning_rate=0.1,
     #                               base_estimator=DecisionTreeClassifier(max_depth=1)
     #                               )
+    # base_clf = LinearSVC()
+    base_clf = LogisticRegression()
     # # clf = base_clf
-    # clf = OneVsRestClassifier(base_clf)
-    # print(custom_cv(clf, processed_ds, labels, 1, 1, tfidf_vectorizer, encoder))
+    clf = OneVsRestClassifier(base_clf, n_jobs=-1)
+    print(custom_cv(clf, processed_ds, labels, 1, 1, tfidf_vectorizer, encoder))
 
-    param_grid = {
-        'n_estimators': [100, 200, 250, 300, 500],
-        'learning_rate': [0.1, 0.2, 0.3, 0.5],
-        'max_depth': [1, 3, 5, 7],
-    }
+    # param_grid = {
+    #     'n_estimators': [100, 200, 250, 300, 500],
+    #     'learning_rate': [0.1, 0.2, 0.3, 0.5],
+    #     'max_depth': [1, 3, 5, 7],
+    # }
     # param_grid = {
     #     'n_estimators': [50, 100, 200, 250, 300, 500],
     #     'learning_rate': [0.1, 0.3, 0.5, 0.7, 0.9],
     #     'max_depth': [1, 3, 5, 7]
     # }
     #
-    all_keys = list(param_grid.keys())
-    combinations = list(it.product(*(param_grid[name] for name in all_keys)))
-    print('Total Combinations: ' + str(len(combinations)))
+    # all_keys = list(param_grid.keys())
+    # combinations = list(it.product(*(param_grid[name] for name in all_keys)))
+    # print('Total Combinations: ' + str(len(combinations)))
+    # #
+    # p = Pool(processes=int(args.num_cpus))
+    # data = p.map(cv_worker, [i for i in range(len(combinations))])
+    # p.close()
+    # #
+    # np.savetxt('cv_result.out', data)
     #
-    p = Pool(processes=int(args.num_cpus))
-    data = p.map(cv_worker, [i for i in range(len(combinations))])
-    p.close()
+    # best_entry = 0
+    # best_index = 0
+    # best_std = 0
     #
-    np.savetxt('cv_result.out', data)
-
-    best_entry = 0
-    best_index = 0
-    best_std = 0
-
-    for result_entry in data:
-        mean_entry = result_entry[1]
-        std_entry = result_entry[2]
-        if mean_entry >= best_entry:
-            best_entry = mean_entry
-            best_index = result_entry[0]
-            best_std = std_entry
-
-    print(best_index)
-    print(best_entry)
-    print(best_std)
-    print(combinations[best_index])
+    # for result_entry in data:
+    #     mean_entry = result_entry[1]
+    #     std_entry = result_entry[2]
+    #     if mean_entry >= best_entry:
+    #         best_entry = mean_entry
+    #         best_index = result_entry[0]
+    #         best_std = std_entry
+    #
+    # print(best_index)
+    # print(best_entry)
+    # print(best_std)
+    # print(combinations[best_index])
     #
     # processed_ds =
     # x_train, y_train, x_test, y_test = get_split_datasets(preprocessed_df)

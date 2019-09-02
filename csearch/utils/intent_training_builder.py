@@ -5,7 +5,6 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import KFold
 
-
 def get_data():
     splits = ['train', 'dev', 'test']
     all_intents = []
@@ -28,6 +27,8 @@ def get_data():
 
     le = preprocessing.LabelEncoder()
     le.fit(all_intents)
+
+    np.save('encoder_classes.npy', le.classes_)
 
     for entry in all_data:
         encoded_intent = le.transform([entry[0]])[0]
@@ -61,11 +62,3 @@ def write_tsv(file_name, dataset):
 
 if __name__ == '__main__':
     generate_training_sets()
-
-    # for split in splits:
-    #     final_dataset_encoded = generate_training_set(split, le)
-    #     with open('stackexchange_dump/intent_data_' + split + '.tsv', 'w', ) as tsv_file:
-    #         writer = csv.writer(tsv_file, delimiter='\t', lineterminator='\n')
-    #         for entry in final_dataset_encoded:
-    #             writer.writerow(entry)
-# %%
