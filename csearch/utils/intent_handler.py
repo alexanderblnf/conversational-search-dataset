@@ -40,7 +40,7 @@ def merge_intent_to_json_dataset(dataset_file: str, intent_file: str, split: str
         json.dump(dataset_data, output_f)
 
 
-def generate_intent_training_from_training_set(dataset_file: str, training_lookup_file: str, samples_per_context: int):
+def generate_intent_mtl_training_from_training_set(dataset_file: str, training_lookup_file: str, samples_per_context: int):
     """
     Generates the intent file for training based on the lookup of the Main Training file.
     For each dialogue context, the function creates a new entry in the intent training file corresponding to the
@@ -102,7 +102,7 @@ def generate_intent_training_from_training_set(dataset_file: str, training_looku
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--mode', help='Selects the mode of operation', choices=['merge', 'generate'], required=True)
+    parser.add_argument('--mode', help='Selects the mode of operation', choices=['merge', 'generate_mtl'], required=True)
     parser.add_argument('--dataset_file', help='JSON file containing the json dataset')
     parser.add_argument('--split', help='Dataset split (train, dev or test')
     parser.add_argument('--intent_file', help='CSV file containing the intents')
@@ -116,10 +116,10 @@ if __name__ == '__main__':
             parser.error('--dataset_file, --split and --intent_file are required when using the merge mode')
         merge_intent_to_json_dataset(args.dataset_file, args.intent_file, args.split)
 
-    if args.mode == 'generate':
+    if args.mode == 'generate_mtl':
         if not args.dataset_file or not args.training_lookup_file or not args.samples_per_context:
             parser.error('--dataset_file, --training_lookup_file and --samples_per_context '
                          'are required when using the generate mode')
-        generate_intent_training_from_training_set(
+        generate_intent_mtl_training_from_training_set(
             args.dataset_file, args.training_lookup_file, int(args.samples_per_context)
         )

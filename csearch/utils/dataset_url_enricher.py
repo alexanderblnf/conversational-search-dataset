@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', help='Selects the dataset to enrich', required=True)
     parser.add_argument('--mode', help='Selects the mode to operate', choices=['extract_url', 'crawl_content'], required=True)
     parser.add_argument('--output_file', help='Specifies the file to which to save the new dataset', required=True)
-    parser.add_argument('--num_cpus', help='Selects the number of cpus to use. Default is 1')
+    parser.add_argument('--num_cpus', help='Selects the number of cpus to use. Default is 8')
 
     args = parser.parse_args()
 
