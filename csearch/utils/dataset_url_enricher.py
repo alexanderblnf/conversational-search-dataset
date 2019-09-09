@@ -110,18 +110,13 @@ def crawl_all_conversation_urls(utterances: list):
 #
 #     return thread_pages_content
 
-def crawl_worker(key):
-    thread_pages_content = {}
-    # keys_range = tqdm(keys, position=cpu_id, desc='CPU ' + str(cpu_id))
-    # for key in keys_range:
-    current_conversation = json_data[key]
-    current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
-    pbar.update(int(key))
-    # print(str(key) + '/' + str(len(json_data_keys)))
-        # thread_pages_content = {**thread_pages_content, **current_entry}
-        # keys_range.refresh()
+def crawl_worker(url):
+    url_content = extract_content_from_url(url)
+    if url_content == INVALID_RESPONSE:
+        return None
 
-    return current_entry
+    time.sleep(10)
+    return {url: url_content}
 
 
 if __name__ == '__main__':
@@ -146,27 +141,43 @@ if __name__ == '__main__':
         print('Crawling each URL for content')
         pages_content = {}
         num_cpus = int(args.num_cpus) if args.num_cpus else 8
+
+        all_urls = []
+        for key, entry in json_data.items():
+            for utterance in entry['utterances']:
+                for url in utterance['urls']:
+                    all_urls.append(url)
+
+        all_urls = list(set(all_urls))
+
         # chunk_per_cpu = round(len(json_data) / num_cpus)
-        json_data_keys = np.array(list(json_data.keys()))
-        pbar = tqdm(total=len(json_data_keys))
+        # json_data_keys = np.array(list(json_data.keys()))
 
         # process_inputs = [(cpu_id, json_data_keys[(chunk_per_cpu * cpu_id):(chunk_per_cpu * cpu_id + chunk_per_cpu)])
         #                   for cpu_id in range(num_cpus)]
+        pbar = tqdm(total=len(all_urls))
 
         with ProcessPool(max_workers=num_cpus) as pool:
-            future = pool.map(crawl_worker, json_data_keys, timeout=15)
+            future = pool.map(crawl_worker, all_urls, timeout=35)
 
             iterator = future.result()
-            try:
-                result = next(iterator)
-                pages_content = {**pages_content, **result}
-            except TimeoutError as error:
-                print("unstable_function took longer than %d seconds" % error.args[1])
-            except ProcessExpired as error:
-                print("%s. Exit code: %d" % (error, error.exitcode))
-            except Exception as error:
-                print("unstable_function raised %s" % error)
-                print(error.traceback)  # Python's traceback of remote process
+            while True:
+                try:
+                    result = next(iterator)
+                    if result:
+                        pages_content = {**pages_content, **result}
+                    pbar.update(1)
+                    pbar.refresh()
+                    # print(len(pages_content))
+                except StopIteration:
+                    break
+                except TimeoutError as error:
+                    print("unstable_function took longer than %d seconds" % error.args[1])
+                except ProcessExpired as error:
+                    print("%s. Exit code: %d" % (error, error.exitcode))
+                except Exception as error:
+                    print("unstable_function raised %s" % error)
+                    print(error.traceback)  # Python's traceback of remote process
 
 
         # p = Pool(processes=num_cpus)
@@ -176,4 +187,5 @@ if __name__ == '__main__':
         # for entry in pages_per_thread:
         #     pages_content = {**pages_content, **entry}
         #
+        pbar.close()
         write_dataset(args.output_file, pages_content)
