@@ -3,6 +3,7 @@ import argparse
 import copy
 import requests
 import numpy as np
+import time
 
 from urlextract import URLExtract
 from tqdm import tqdm
@@ -13,6 +14,9 @@ from pathlib import PurePath
 from urllib.parse import urlparse
 from requests.exceptions import MissingSchema, ConnectionError, ReadTimeout
 from multiprocessing import Pool
+from concurrent.futures import TimeoutError
+from pebble import ProcessPool, ProcessExpired
+
 
 
 extractor = URLExtract()
@@ -42,7 +46,7 @@ def add_links_to_conversation(utterances: list):
 
 def is_valid_url(url: str) -> bool:
     try:
-        headers = requests.head(url, timeout=5).headers
+        headers = requests.head(url, timeout=10).headers
     except:
         return False
 
@@ -94,16 +98,30 @@ def crawl_all_conversation_urls(utterances: list):
     return pages_content
 
 
-def crawl_worker(cpu_id: int, keys):
-    thread_pages_content = {}
-    keys_range = tqdm(keys, position=cpu_id, desc='CPU ' + str(cpu_id))
-    for key in keys_range:
-        current_conversation = json_data[key]
-        current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
-        thread_pages_content = {**thread_pages_content, **current_entry}
-        keys_range.refresh()
+# def crawl_worker(cpu_id: int, keys):
+#     thread_pages_content = {}
+#     keys_range = tqdm(keys, position=cpu_id, desc='CPU ' + str(cpu_id))
+#     for key in keys_range:
+#         current_conversation = json_data[key]
+#         current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
+#         thread_pages_content = {**thread_pages_content, **current_entry}
+#         keys_range.refresh()
+#
+#     return thread_pages_content
 
-    return thread_pages_content
+def crawl_worker(key):
+    thread_pages_content = {}
+    # keys_range = tqdm(keys, position=cpu_id, desc='CPU ' + str(cpu_id))
+    # for key in keys_range:
+    current_conversation = json_data[key]
+    current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
+    pbar.update(int(key))
+    time.sleep(10)
+    # print(str(key) + '/' + str(len(json_data_keys)))
+        # thread_pages_content = {**thread_pages_content, **current_entry}
+        # keys_range.refresh()
+
+    return current_entry
 
 
 if __name__ == '__main__':
@@ -116,6 +134,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     json_data = load_dataset(args.dataset)
+    incr = 0
 
     if args.mode == 'extract_url':
         print('Extracting URLs from conversations')
@@ -127,16 +146,34 @@ if __name__ == '__main__':
         print('Crawling each URL for content')
         pages_content = {}
         num_cpus = int(args.num_cpus) if args.num_cpus else 8
-        chunk_per_cpu = round(len(json_data) / num_cpus)
+        # chunk_per_cpu = round(len(json_data) / num_cpus)
         json_data_keys = np.array(list(json_data.keys()))
+        pbar = tqdm(total=len(json_data_keys))
 
-        process_inputs = [(cpu_id, json_data_keys[(chunk_per_cpu * cpu_id):(chunk_per_cpu * cpu_id + chunk_per_cpu)])
-                          for cpu_id in range(num_cpus)]
-        p = Pool(processes=num_cpus)
-        pages_per_thread = p.starmap(crawl_worker, process_inputs)
-        p.close()
+        # process_inputs = [(cpu_id, json_data_keys[(chunk_per_cpu * cpu_id):(chunk_per_cpu * cpu_id + chunk_per_cpu)])
+        #                   for cpu_id in range(num_cpus)]
 
-        for entry in pages_per_thread:
-            pages_content = {**pages_content, **entry}
+        with ProcessPool(max_workers=num_cpus) as pool:
+            future = pool.map(crawl_worker, json_data_keys, timeout=15)
 
+            iterator = future.result()
+            try:
+                result = next(iterator)
+                pages_content = {**pages_content, **result}
+            except TimeoutError as error:
+                print("unstable_function took longer than %d seconds" % error.args[1])
+            except ProcessExpired as error:
+                print("%s. Exit code: %d" % (error, error.exitcode))
+            except Exception as error:
+                print("unstable_function raised %s" % error)
+                print(error.traceback)  # Python's traceback of remote process
+
+
+        # p = Pool(processes=num_cpus)
+        # pages_per_thread = p.starmap(crawl_worker, process_inputs)
+        # p.close()
+
+        # for entry in pages_per_thread:
+        #     pages_content = {**pages_content, **entry}
+        #
         write_dataset(args.output_file, pages_content)
