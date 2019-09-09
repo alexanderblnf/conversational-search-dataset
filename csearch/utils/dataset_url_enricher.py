@@ -94,6 +94,7 @@ def crawl_all_conversation_urls(utterances: list):
     for utterance in utterances:
         for url in utterance['urls']:
             pages_content[url] = extract_content_from_url(url)
+            time.sleep(10)
 
     return pages_content
 
@@ -116,7 +117,6 @@ def crawl_worker(key):
     current_conversation = json_data[key]
     current_entry = crawl_all_conversation_urls(current_conversation['utterances'])
     pbar.update(int(key))
-    time.sleep(10)
     # print(str(key) + '/' + str(len(json_data_keys)))
         # thread_pages_content = {**thread_pages_content, **current_entry}
         # keys_range.refresh()
