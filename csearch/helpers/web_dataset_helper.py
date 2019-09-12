@@ -44,8 +44,8 @@ class WebDatasetHelper:
             )
         )
 
-        return [self.url_mapping[utterance['urls'][0]]['text'] for utterance in valid_agent_utterances
-                if utterance['urls'][0] in self.url_mapping]
+        return [self.url_mapping[url]['text'] for utterance in valid_agent_utterances
+                for url in list(filter(lambda url: url in self.url_mapping, utterance['urls']))]
 
     def is_valid_utterance(self, utterance):
         crawled_urls = list(

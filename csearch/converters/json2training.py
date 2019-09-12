@@ -166,26 +166,26 @@ class WebJson2Training(JSON2Training):
             if not true_answer_urls:
                 continue
 
-            for true_url in true_answer_urls:
-                self.process_url(training_entry, topic, key, true_url)
+            true_documents = [self.url_mapping[url]['text'] for url in true_answer_urls]
 
-    def process_url(self, training_entry: list, topic: str, key: str, url: str) -> None:
-        true_document = self.url_mapping[url]['text']
+            for true_document in true_documents:
+                self.process_url(training_entry, true_documents, topic, key, true_document)
+
+    def process_url(self, training_entry: list, true_documents: list, topic: str, key: str, true_document: str) -> None:
         url_training_entry = training_entry + [true_document]
 
         self.dialog_lookup_table.append(int(key))
         self.training_set.append(url_training_entry)
 
-        negative_training_entry = ([0] + url_training_entry[1:len(training_entry) - 1])
-        top_responses = self.bm25_helper[topic].get_negative_samples(true_document, 11)
+        negative_training_entry = ([0] + training_entry[1:])
+        top_responses = self.bm25_helper[topic].get_negative_samples(true_document, 10 + len(true_documents))
 
-        index_to_delete = 0
+        top_responses_without_true_documents = list(
+            filter(lambda response: response not in true_documents, top_responses)
+        )
 
-        if true_document in top_responses:
-            index_to_delete = top_responses.index(true_document)
+        top_responses_without_true_documents = top_responses_without_true_documents[0:11]
 
-        del (top_responses[index_to_delete])
-
-        for top_response in top_responses:
+        for top_response in top_responses_without_true_documents:
             self.dialog_lookup_table.append(int(key))
             self.training_set.append(negative_training_entry + [top_response])
