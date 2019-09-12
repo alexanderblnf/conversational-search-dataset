@@ -124,3 +124,62 @@ class Json2EasyTraining(JSON2Training):
             for top_response in top_responses:
                 self.dialog_lookup_table.append(int(key))
                 self.training_set.append(negative_training_entry + [top_response])
+
+
+class WebJson2Training(JSON2Training):
+    def __init__(self, json_data: dict, url_mapping:dict, bm_25_helper):
+        super().__init__(json_data, bm_25_helper)
+        self.bm25_helper = bm_25_helper
+        self.url_mapping = url_mapping
+
+    def process_dialogue(self, key: str, dialogue: dict) -> None:
+        """
+        Given an entire dialogue, this function creates all the possible context-response entries
+        :param key:
+        :param dialogue:
+        :return:
+        """
+        utterances = dialogue['utterances']
+        topic = dialogue['category']
+        user_utterances = list(
+            filter(
+                lambda utterance: utterance['actor_type'] == 'user', utterances
+            )
+        )
+
+        # Discard smallest context (with just 1 turn)
+        del(user_utterances[0])
+
+        for user_utterance in user_utterances:
+            current_pos = user_utterance['utterance_pos']
+
+            if current_pos == len(utterances):
+                break
+
+            first_utterance_pos = max(1, current_pos - 10)
+            training_entry = ([1] + [utterance['utterance'] for utterance in utterances
+                                     if first_utterance_pos <= utterance['utterance_pos'] <= current_pos])
+
+            # current_pos starts index from 1 instead of 0
+            true_answer_urls = utterances[current_pos]['urls']
+
+            if not true_answer_urls or true_answer_urls[0] not in self.url_mapping:
+                continue
+
+            true_document = self.url_mapping[true_answer_urls[0]]['text']
+            training_entry += [true_document]
+            self.dialog_lookup_table.append(int(key))
+            self.training_set.append(training_entry)
+
+            negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])
+            top_responses = self.bm25_helper[topic].get_negative_samples(true_document, 11)
+
+            index_to_delete = 0
+            if true_document in top_responses:
+                index_to_delete = top_responses.index(true_document)
+
+            del(top_responses[index_to_delete])
+
+            for top_response in top_responses:
+                self.dialog_lookup_table.append(int(key))
+                self.training_set.append(negative_training_entry + [top_response])

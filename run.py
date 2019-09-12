@@ -1,6 +1,7 @@
 from csearch.builders.json_builder import StackExchangeJSONBuilder
 from csearch.builders.training_builder import TrainingSetBuilder
 from csearch.helpers.dataset_helper import DatasetHelper
+from csearch.builders.web_training_builder import WebTrainingSetBuilder
 import os
 import sys
 
@@ -18,6 +19,10 @@ def build_training(dump_folder: str, difficulty: str):
     TrainingSetBuilder(dump_folder).build(difficulty == 'easy')
 
 
+def build_web_training(dump_folder: str, topic: str):
+    WebTrainingSetBuilder(dump_folder).build()
+
+
 def merge_topics(topics: list):
     DatasetHelper.merge_topics(topics)
 
@@ -30,6 +35,7 @@ if __name__ == "__main__":
     switch = {
         'json': build_json,
         'training': build_training,
+        'web_training': build_web_training,
         'merge': merge_topics,
     }
 
@@ -52,6 +58,11 @@ if __name__ == "__main__":
 
         dump_folder = os.path.dirname(os.path.abspath(__file__)) + '/stackexchange_dump'
         switch[mode](dump_folder, difficulty)
+        exit(1)
+
+    if mode == 'web_training':
+        dump_folder = os.path.dirname(os.path.abspath(__file__)) + '/stackexchange_dump/mantis_web/'
+        switch[mode](dump_folder, None)
         exit(1)
 
     topic = sys.argv[2]
