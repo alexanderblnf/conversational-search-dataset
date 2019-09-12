@@ -161,25 +161,31 @@ class WebJson2Training(JSON2Training):
                                      if first_utterance_pos <= utterance['utterance_pos'] <= current_pos])
 
             # current_pos starts index from 1 instead of 0
-            true_answer_urls = utterances[current_pos]['urls']
+            true_answer_urls = list(filter(lambda url: url in self.url_mapping, utterances[current_pos]['urls']))
 
-            if not true_answer_urls or true_answer_urls[0] not in self.url_mapping:
+            if not true_answer_urls:
                 continue
 
-            true_document = self.url_mapping[true_answer_urls[0]]['text']
-            training_entry += [true_document]
+            for true_url in true_answer_urls:
+                self.process_url(training_entry, topic, key, true_url)
+
+    def process_url(self, training_entry: list, topic: str, key: str, url: str) -> None:
+        true_document = self.url_mapping[url]['text']
+        url_training_entry = training_entry + [true_document]
+
+        self.dialog_lookup_table.append(int(key))
+        self.training_set.append(url_training_entry)
+
+        negative_training_entry = ([0] + url_training_entry[1:len(training_entry) - 1])
+        top_responses = self.bm25_helper[topic].get_negative_samples(true_document, 11)
+
+        index_to_delete = 0
+
+        if true_document in top_responses:
+            index_to_delete = top_responses.index(true_document)
+
+        del (top_responses[index_to_delete])
+
+        for top_response in top_responses:
             self.dialog_lookup_table.append(int(key))
-            self.training_set.append(training_entry)
-
-            negative_training_entry = ([0] + training_entry[1:len(training_entry) - 1])
-            top_responses = self.bm25_helper[topic].get_negative_samples(true_document, 11)
-
-            index_to_delete = 0
-            if true_document in top_responses:
-                index_to_delete = top_responses.index(true_document)
-
-            del(top_responses[index_to_delete])
-
-            for top_response in top_responses:
-                self.dialog_lookup_table.append(int(key))
-                self.training_set.append(negative_training_entry + [top_response])
+            self.training_set.append(negative_training_entry + [top_response])
