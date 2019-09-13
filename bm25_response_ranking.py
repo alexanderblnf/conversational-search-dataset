@@ -9,6 +9,7 @@ def load_corpus(filename: str):
     data = [row for row in filereader]
     return data, ['.'.join(conversation[1:-1]) for conversation in data if conversation[0] == '1']
 
+
 if __name__ == '__main__':
     # _, train_context_corpus = load_corpus('stackexchange_dump/data_train_easy.tsv')
     # _, dev_context_corpus = load_corpus('stackexchange_dump/data_dev_easy.tsv')
