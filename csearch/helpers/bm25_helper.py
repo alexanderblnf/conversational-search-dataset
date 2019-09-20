@@ -1,4 +1,5 @@
 import numpy as np
+np.random.seed(10)
 import spacy
 from gensim.summarization.bm25 import BM25
 from math import floor
