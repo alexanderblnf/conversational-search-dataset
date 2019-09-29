@@ -184,7 +184,7 @@ class WebJson2Training(JSON2Training):
             filter(lambda response: response not in true_documents, top_responses)
         )
 
-        top_responses_without_true_documents = top_responses_without_true_documents[0:11]
+        top_responses_without_true_documents = top_responses_without_true_documents[0:10]
 
         for top_response in top_responses_without_true_documents:
             self.dialog_lookup_table.append(int(key))
