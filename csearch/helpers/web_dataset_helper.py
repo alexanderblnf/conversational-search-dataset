@@ -5,6 +5,18 @@ class WebDatasetHelper:
     def __init__(self, url_mapping: dict):
         self.url_mapping = url_mapping
 
+    def __build_raw_web_document_corpus(self, json_data: dict) -> list:
+        """
+        Builds the agent corpus, which is used to generate additional dialogues using BM25
+        :return:
+        """
+        corpus = []
+
+        for (key, dialogue) in json_data.items():
+            corpus += (self.__process_web_documents(dialogue))
+
+        return corpus
+
     def __build_multi_topic_raw_web_document_corpus(self, json_data: dict) -> dict:
         """
         Builds the web document corpus, which is used to generate additional dialogues using BM25
@@ -20,6 +32,9 @@ class WebDatasetHelper:
             corpus[topic] += (self.__process_web_documents(dialogue))
 
         return corpus
+
+    def build_bm25_helper(self, json_data: dict) -> BM25Helper:
+        return BM25Helper(self.__build_raw_web_document_corpus(json_data))
 
     def build_multi_topic_bm25_helper(self, json_data: dict) -> dict:
         bm25_helper = {}
@@ -44,7 +59,7 @@ class WebDatasetHelper:
             )
         )
 
-        return [self.url_mapping[url]['text'] for utterance in valid_agent_utterances
+        return [self.url_mapping[url]['text'].replace('\n', '.').replace('\r', '.') for utterance in valid_agent_utterances
                 for url in list(filter(lambda url: url in self.url_mapping, utterance['urls']))]
 
     def is_valid_utterance(self, utterance):

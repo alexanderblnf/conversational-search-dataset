@@ -19,8 +19,8 @@ def build_training(dump_folder: str, difficulty: str):
     TrainingSetBuilder(dump_folder).build(difficulty == 'easy')
 
 
-def build_web_training(dump_folder: str, topic: str):
-    WebTrainingSetBuilder(dump_folder).build()
+def build_web_training(dump_folder: str, difficulty: str):
+    WebTrainingSetBuilder(dump_folder).build(difficulty == 'easy')
 
 
 def merge_topics(topics: list):
@@ -61,8 +61,12 @@ if __name__ == "__main__":
         exit(1)
 
     if mode == 'web_training':
+        difficulty = 'normal'
+        if len(sys.argv) == 3:
+            difficulty = sys.argv[2]
+
         dump_folder = os.path.dirname(os.path.abspath(__file__)) + '/stackexchange_dump/mantis_web/'
-        switch[mode](dump_folder, None)
+        switch[mode](dump_folder, difficulty)
         exit(1)
 
     topic = sys.argv[2]

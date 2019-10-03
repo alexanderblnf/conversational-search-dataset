@@ -3,6 +3,7 @@ np.random.seed(10)
 import spacy
 from gensim.summarization.bm25 import BM25
 from math import floor
+from tqdm import tqdm
 
 
 class BM25Helper:
@@ -13,7 +14,7 @@ class BM25Helper:
         self.raw_corpus = np.array(self.raw_corpus)
         self.model = BM25(self.processed_corpus)
 
-    def __bm25_pre_process_utterance(self, query: str) -> list:
+    def bm25_pre_process_utterance(self, query: str) -> list:
         """
         Tokenizes a utterance and removes stopwords and punctuation
         :param query:
@@ -32,15 +33,13 @@ class BM25Helper:
         print('Pre-processing the agent corpus in order to apply BM25...')
 
         corpus_size = len(self.raw_corpus)
-        progress_increment = floor(corpus_size / 100)
         i = 0
 
-        for doc in self.__pipeline.pipe(self.raw_corpus):
-            if i % progress_increment == 0:
-                print('Progress: ' + str(floor(i / progress_increment)) + '%')
-
-            processed_corpus.append([token.text.lower() for token in doc if not token.is_stop and not token.is_punct])
-            i += 1
+        with tqdm(total=corpus_size) as pbar:
+            for doc in self.__pipeline.pipe(self.raw_corpus):
+                processed_corpus.append([token.text.lower() for token in doc if not token.is_stop and not token.is_punct])
+                pbar.update(1)
+                i += 1
 
         return processed_corpus
 
@@ -52,7 +51,7 @@ class BM25Helper:
         :param n:
         :return:
         """
-        processed_query = self.__bm25_pre_process_utterance(query)
+        processed_query = self.bm25_pre_process_utterance(query)
 
         scores = np.array(self.model.get_scores(processed_query))
         subset_length = min(1000, len(scores))
@@ -69,7 +68,7 @@ class BM25Helper:
         return unique_responses
 
     def get_top_n(self, query: str, n: int) -> list:
-        processed_query = self.__bm25_pre_process_utterance(query)
+        processed_query = self.bm25_pre_process_utterance(query)
         scores = np.array(self.model.get_scores(processed_query))
         top_queries = np.argpartition(scores, -n)[-n:]
 

@@ -1,5 +1,6 @@
 import json
 import csv
+from csearch.converters.json2training import WebJson2EasyTraining
 from csearch.converters.json2training import WebJson2Training
 from csearch.helpers.web_dataset_helper import WebDatasetHelper
 
@@ -27,7 +28,7 @@ class WebTrainingSetBuilder:
             for entry in data:
                 f.write('%s\n' % entry)
 
-    def __build_bm25_helper(self):
+    def __build_bm25_helper(self, is_easy=False):
         allocations = ['train', 'dev']
         json_data_for_bm25 = {}
         current_index = 0
@@ -47,9 +48,10 @@ class WebTrainingSetBuilder:
 
         dataset_helper = WebDatasetHelper(url_mapping)
 
-        return dataset_helper.build_multi_topic_bm25_helper(json_data_for_bm25)
+        return dataset_helper.build_multi_topic_bm25_helper(json_data_for_bm25) if is_easy else \
+            dataset_helper.build_bm25_helper(json_data_for_bm25)
 
-    def build(self) -> None:
+    def build(self, is_easy=False) -> None:
         """
         Given a json structure, this function builds a tsv containing all possible (label, context, document) triples
         that can be obtained from the dialogues
@@ -66,11 +68,13 @@ class WebTrainingSetBuilder:
             with open(self.__json_location + self.__url_mapping_prefix + allocation + '.json', 'r') as f:
                 url_mapping_allocation = json.load(f)
 
-            json2training_converter = WebJson2Training(json_data, url_mapping_allocation, bm25_helper)
+            json2training_converter = WebJson2EasyTraining(json_data, url_mapping_allocation, bm25_helper) if is_easy \
+                else WebJson2Training(json_data, url_mapping_allocation, bm25_helper)
 
             training_set = json2training_converter.convert()
             dialog_lookup_table = json2training_converter.get_dialog_lookup_table()
 
-            output_file_name = 'data_' + allocation + '_web'
+            suffix = '' if is_easy else '_hard'
+            output_file_name = 'data_' + allocation + '_web' + suffix
             self.__write_tsv(output_file_name + '.tsv', training_set)
             self.__write_array(output_file_name + '_lookup' '.txt', dialog_lookup_table)
