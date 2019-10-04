@@ -71,6 +71,8 @@ class WebTrainingSetBuilder:
             json2training_converter = WebJson2EasyTraining(json_data, url_mapping_allocation, bm25_helper) if is_easy \
                 else WebJson2Training(json_data, url_mapping_allocation, bm25_helper)
 
+            print('Commencing conversion step')
+
             training_set = json2training_converter.convert()
             dialog_lookup_table = json2training_converter.get_dialog_lookup_table()
 
