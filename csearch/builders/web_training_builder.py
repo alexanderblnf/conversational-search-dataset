@@ -78,5 +78,6 @@ class WebTrainingSetBuilder:
 
             suffix = '' if is_easy else '_hard'
             output_file_name = 'data_' + allocation + '_web' + suffix
+            print('Writing to file: ' + output_file_name)
             self.__write_tsv(output_file_name + '.tsv', training_set)
             self.__write_array(output_file_name + '_lookup' '.txt', dialog_lookup_table)
