@@ -59,7 +59,7 @@ class WebTrainingSetBuilder:
         """
         allocations = ['train', 'dev', 'test']
 
-        bm25_helper = self.__build_bm25_helper()
+        bm25_helper = self.__build_bm25_helper(is_easy)
 
         for allocation in allocations:
             with open(self.__json_location + self.__json_data_prefix + allocation + '_urls.json', 'r') as f:
