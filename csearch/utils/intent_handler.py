@@ -2,6 +2,8 @@ import json
 import csv
 import argparse
 from sklearn import preprocessing
+from collections import defaultdict
+import numpy as np
 
 
 def merge_intent_to_json_dataset(dataset_file: str, intent_file: str, split: str):
@@ -40,7 +42,7 @@ def merge_intent_to_json_dataset(dataset_file: str, intent_file: str, split: str
         json.dump(dataset_data, output_f)
 
 
-def generate_intent_mtl_training_from_training_set(dataset_file: str, training_lookup_file: str, samples_per_context: int):
+def generate_intent_mtl_training_from_training_set(dataset_location: str, training_lookup_location: str, samples_per_context: int):
     """
     Generates the intent file for training based on the lookup of the Main Training file.
     For each dialogue context, the function creates a new entry in the intent training file corresponding to the
@@ -52,51 +54,63 @@ def generate_intent_mtl_training_from_training_set(dataset_file: str, training_l
     """
     # To be changed if something else than the last user query of the context needs to be observed
     initial_last_utterance = 3
+    allocations = ['train', 'dev', 'test']
+    training_intent_data = defaultdict(list)
+    training_lookup_files = {}
 
-    with open(dataset_file, 'r') as dataset_f:
-        dataset_data = json.load(dataset_f)
+    for allocation in allocations:
+        dataset_file = dataset_location + '/merged_' + allocation + '_intents.json'
+        with open(dataset_file, 'r') as dataset_f:
+            dataset_data = json.load(dataset_f)
 
-    lookup_data = []
-    with open(training_lookup_file, 'r') as training_lookup_f:
-        rows = csv.reader(training_lookup_f)
-        for row in rows:
-            lookup_data.append(row[0])
+        lookup_data = []
+        training_lookup_file = training_lookup_location + '/data_' + allocation + '_easy_lookup.txt'
+        training_lookup_files[allocation] = training_lookup_file
 
-    training_intent_data = []
-    current_index = lookup_data[0]
-    occurrences = 0
-    current_last_utterance = initial_last_utterance
+        with open(training_lookup_file, 'r') as training_lookup_f:
+            rows = csv.reader(training_lookup_f)
+            for row in rows:
+                lookup_data.append(row[0])
 
-    for entry in lookup_data:
-        if entry != current_index:
-            current_index = entry
-            occurrences = 0
-            current_last_utterance = initial_last_utterance
+        current_index = lookup_data[0]
+        occurrences = 0
+        current_last_utterance = initial_last_utterance
 
-        if 'has_intent_labels' in dataset_data[current_index]:
-            training_intent_data.append(dataset_data[current_index]['utterances'][current_last_utterance - 1]['intent'])
-        else:
-            training_intent_data.append('None')
+        for entry in lookup_data:
+            if entry != current_index:
+                current_index = entry
+                occurrences = 0
+                current_last_utterance = initial_last_utterance
 
-        if occurrences > 0 and occurrences % samples_per_context == 0:
-            current_last_utterance += 2
+            if 'has_intent_labels' in dataset_data[current_index]:
+                training_intent_data[allocation].append(dataset_data[current_index]['utterances'][current_last_utterance - 1]['intent'])
+            else:
+                training_intent_data[allocation].append('None')
 
-        occurrences += 1
+            if occurrences > 0 and occurrences % samples_per_context == 0:
+                current_last_utterance += 2
 
-    output_file = training_lookup_file[:training_lookup_file.index('.txt')] + '_intents'
-    with open(output_file + '.txt', 'w') as output_f:
-        for entry in training_intent_data:
-            output_f.write("%s\n" % str(entry))
+            occurrences += 1
 
-    training_intent_data_stringified = [','.join(sorted(entry)) if entry != 'None' else 'A'
-                                        for entry in training_intent_data]
+    label_encoder = preprocessing.LabelEncoder()
+    label_encoder.fit([','.join(sorted(val)) if val != 'None' else 'A' for values in training_intent_data.values()
+                       for val in values])
+    np.save(training_lookup_location + '/encoder_classes.npy', label_encoder.classes_)
 
-    le = preprocessing.LabelEncoder()
-    training_intent_data_encoded = le.fit_transform(training_intent_data_stringified)
+    for allocation in allocations:
+        output_file = training_lookup_files[allocation][:training_lookup_files[allocation].index('.txt')] + '_intents'
+        with open(output_file + '.txt', 'w') as output_f:
+            for entry in training_intent_data[allocation]:
+                output_f.write("%s\n" % str(entry))
 
-    with open(output_file + '_encoded.txt', 'w') as output_f:
-        for entry in training_intent_data_encoded:
-            output_f.write("%s\n" % str(entry))
+        training_intent_data_stringified = [','.join(sorted(entry)) if entry != 'None' else 'A'
+                                            for entry in training_intent_data[allocation]]
+
+        training_intent_data_encoded = label_encoder.transform(training_intent_data_stringified)
+
+        with open(output_file + '_encoded.txt', 'w') as output_f:
+            for entry in training_intent_data_encoded:
+                output_f.write("%s\n" % str(entry))
 
 
 if __name__ == '__main__':
@@ -106,7 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_file', help='JSON file containing the json dataset')
     parser.add_argument('--split', help='Dataset split (train, dev or test')
     parser.add_argument('--intent_file', help='CSV file containing the intents')
-    parser.add_argument('--training_lookup_file', help='Lookup file generated with the training .tsv')
+    parser.add_argument('--dataset_location', help='Location of the JSON files containing the json dataset')
+    parser.add_argument('--training_lookup_location', help='Location of the lookup files generated with the training .tsv')
     parser.add_argument('--samples_per_context', help='How many samples are generated per context')
 
     args = parser.parse_args()
@@ -117,9 +132,9 @@ if __name__ == '__main__':
         merge_intent_to_json_dataset(args.dataset_file, args.intent_file, args.split)
 
     if args.mode == 'generate_mtl':
-        if not args.dataset_file or not args.training_lookup_file or not args.samples_per_context:
-            parser.error('--dataset_file, --training_lookup_file and --samples_per_context '
+        if not args.dataset_location or not args.training_lookup_location or not args.samples_per_context:
+            parser.error('--dataset_location, --training_lookup_location and --samples_per_context '
                          'are required when using the generate mode')
         generate_intent_mtl_training_from_training_set(
-            args.dataset_file, args.training_lookup_file, int(args.samples_per_context)
+            args.dataset_location, args.training_lookup_location, int(args.samples_per_context)
         )
