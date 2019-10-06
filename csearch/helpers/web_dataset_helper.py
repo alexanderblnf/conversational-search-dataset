@@ -60,7 +60,7 @@ class WebDatasetHelper:
         )
 
         return [self.url_mapping[url]['text'].replace('\n', '.').replace('\r', '.') for utterance in valid_agent_utterances
-                for url in list(filter(lambda url: url in self.url_mapping and len(self.url_mapping[url]['text'].split()) < 4000, utterance['urls']))]
+                for url in list(filter(lambda url: url in self.url_mapping, utterance['urls']))]
 
     def is_valid_utterance(self, utterance):
         crawled_urls = list(
