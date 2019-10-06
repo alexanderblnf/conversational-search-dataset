@@ -230,7 +230,7 @@ class WebJson2EasyTraining(JSON2Training):
             if not true_answer_urls:
                 continue
 
-            true_documents = [self.url_mapping[url]['text'] for url in true_answer_urls]
+            true_documents = [self.url_mapping[url]['text'].replace('\n', '.').replace('\r', '.') for url in true_answer_urls]
 
             for true_document in true_documents:
                 self.process_url(training_entry, true_documents, topic, key, true_document)
