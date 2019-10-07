@@ -83,6 +83,13 @@ def generate_intent_mtl_training_from_training_set(dataset_location: str, traini
                 current_last_utterance = initial_last_utterance
 
             if 'has_intent_labels' in dataset_data[current_index]:
+                conversation_length = len(dataset_data[current_index]['utterances'])
+
+                # Web can have multiple URLs for the same conversation
+                if current_last_utterance > conversation_length:
+                    occurrences = 0
+                    current_last_utterance = initial_last_utterance
+
                 training_intent_data[allocation].append(dataset_data[current_index]['utterances'][current_last_utterance - 1]['intent'])
             else:
                 training_intent_data[allocation].append('None')
