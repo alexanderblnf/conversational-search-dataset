@@ -1,15 +1,15 @@
 from csearch.helpers.bm25_helper import BM25Helper
+from csearch.helpers.file_helper import FileHelper
 from math import floor
-
+from tqdm import tqdm
 
 class JSON2Training:
-    def __init__(self, json_data: dict, bm25_helper):
+    def __init__(self, json_data: dict, bm25_helper, file_helper: FileHelper):
         self.json_data = json_data
-
         self.bm25_helper = bm25_helper
-
         self.training_set = []
         self.dialog_lookup_table = []
+        self.file_helper = file_helper
 
     def process_dialogue(self, key: str, dialogue: dict) -> None:
         """
@@ -59,22 +59,30 @@ class JSON2Training:
     def get_dialog_lookup_table(self) -> list:
         return self.dialog_lookup_table
 
-    def convert(self) -> list:
+    def write_and_clear_training(self):
+        self.file_helper.write_tsv('.tsv', self.training_set, append=True)
+        self.training_set = []
+        self.file_helper.write_array('_lookup.txt', self.dialog_lookup_table, append=True)
+        self.dialog_lookup_table = []
+
+    def convert_and_write(self) -> None:
         """
         Converts all the dialogues contained in a json structure into a list of (label, context, response) triples
         :return:
         """
         dataset_size = len(self.json_data.keys())
-        progress_increment = floor(dataset_size / 100)
+        progress_increment = floor(dataset_size / 20)
 
         print('Converting the json to training set')
-        for (key, dialogue) in self.json_data.items():
-            if int(key) % progress_increment == 0:
-                print('Progress: ' + str(floor(int(key) / progress_increment)) + '%')
+        with tqdm(total=len(self.json_data)) as pbar:
+            for (key, dialogue) in self.json_data.items():
+                if int(key) % progress_increment == 0:
+                    self.write_and_clear_training()
 
-            self.process_dialogue(key, dialogue)
+                self.process_dialogue(key, dialogue)
+                pbar.update(1)
 
-        return self.training_set
+        self.write_and_clear_training()
 
 
 class Json2EasyTraining(JSON2Training):
@@ -127,8 +135,8 @@ class Json2EasyTraining(JSON2Training):
 
 
 class WebJson2Training(JSON2Training):
-    def __init__(self, json_data: dict, url_mapping: dict, bm_25_helper):
-        super().__init__(json_data, bm_25_helper)
+    def __init__(self, json_data: dict, url_mapping: dict, bm_25_helper, file_helper):
+        super().__init__(json_data, bm_25_helper, file_helper)
         self.bm25_helper = bm_25_helper
         self.url_mapping = url_mapping
 
@@ -165,7 +173,7 @@ class WebJson2Training(JSON2Training):
             if not true_answer_urls:
                 continue
 
-            true_documents = [self.url_mapping[url]['text'] for url in true_answer_urls]
+            true_documents = [self.url_mapping[url]['text'].replace('\n', '.').replace('\r', '.') for url in true_answer_urls]
 
             for true_document in true_documents:
                 self.process_url(training_entry, true_documents, key, true_document)
@@ -191,8 +199,8 @@ class WebJson2Training(JSON2Training):
 
 
 class WebJson2EasyTraining(JSON2Training):
-    def __init__(self, json_data: dict, url_mapping:dict, bm_25_helper):
-        super().__init__(json_data, bm_25_helper)
+    def __init__(self, json_data: dict, url_mapping:dict, bm_25_helper, file_helper):
+        super().__init__(json_data, bm_25_helper, file_helper)
         self.bm25_helper = bm_25_helper
         self.url_mapping = url_mapping
 

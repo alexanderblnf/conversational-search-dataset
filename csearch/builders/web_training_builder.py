@@ -3,6 +3,7 @@ import csv
 from csearch.converters.json2training import WebJson2EasyTraining
 from csearch.converters.json2training import WebJson2Training
 from csearch.helpers.web_dataset_helper import WebDatasetHelper
+from csearch.helpers.file_helper import FileHelper
 
 
 class WebTrainingSetBuilder:
@@ -11,20 +12,22 @@ class WebTrainingSetBuilder:
         self.__json_data_prefix: str = 'merged_'
         self.__url_mapping_prefix: str = 'url_mapping_'
 
-    def __write_tsv(self, file_name: str, data: list) -> None:
+    def __write_tsv(self, file_name: str, data: list, append: bool = False) -> None:
         """
         Given a filename and a list, this function writes the list in tsv format
         :param file_name:
         :param data:
         :return:
         """
-        with open(self.__json_location + '/' + file_name, 'w',) as tsv_file:
+        write_mode = 'a' if append else 'w'
+        with open(self.__json_location + '/' + file_name, write_mode) as tsv_file:
             writer = csv.writer(tsv_file, delimiter='\t', lineterminator='\n')
             for entry in data:
                 writer.writerow(entry)
 
-    def __write_array(self, file_name: str, data:list) -> None:
-        with open(self.__json_location + '/' + file_name, 'w') as f:
+    def __write_array(self, file_name: str, data: list, append: bool = False) -> None:
+        write_mode = 'a' if append else 'w'
+        with open(self.__json_location + '/' + file_name, write_mode) as f:
             for entry in data:
                 f.write('%s\n' % entry)
 
@@ -68,16 +71,14 @@ class WebTrainingSetBuilder:
             with open(self.__json_location + self.__url_mapping_prefix + allocation + '.json', 'r') as f:
                 url_mapping_allocation = json.load(f)
 
-            json2training_converter = WebJson2EasyTraining(json_data, url_mapping_allocation, bm25_helper) if is_easy \
-                else WebJson2Training(json_data, url_mapping_allocation, bm25_helper)
-
-            print('Commencing conversion step')
-
-            training_set = json2training_converter.convert()
-            dialog_lookup_table = json2training_converter.get_dialog_lookup_table()
-
             suffix = '' if is_easy else '_hard'
-            output_file_name = 'data_' + allocation + '_web' + suffix
-            print('Writing to file: ' + output_file_name)
-            self.__write_tsv(output_file_name + '.tsv', training_set)
-            self.__write_array(output_file_name + '_lookup' '.txt', dialog_lookup_table)
+            file_location = self.__json_location + '/' + 'data_' + allocation + '_web' + suffix
+            file_helper = FileHelper(file_location)
+
+            json2training_converter = WebJson2EasyTraining(json_data, url_mapping_allocation, bm25_helper, file_helper) \
+                if is_easy else WebJson2Training(json_data, url_mapping_allocation, bm25_helper, file_helper)
+
+            del json_data
+            del url_mapping_allocation
+
+            json2training_converter.convert_and_write()
