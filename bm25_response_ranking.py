@@ -29,7 +29,7 @@ def get_score_custom(document, index, bm25_model: BM25, k1, b):
     -------
     float
         BM25 score.
-
+c
     """
     score = 0
     doc_freqs = bm25_model.doc_freqs[index]
@@ -89,10 +89,8 @@ if __name__ == '__main__':
     del data
 
     param_grid = {
-        # 'k1': [0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1],
-        # 'b': [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
-        'k1': [0.5],
-        'b': [0.2],
+        'k1': [0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1],
+        'b': [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
     }
     all_keys = list(param_grid.keys())
     combinations = [{'k1': entry[0], 'b': entry[1]} for entry in list(it.product(*(param_grid[name] for name in all_keys)))]
