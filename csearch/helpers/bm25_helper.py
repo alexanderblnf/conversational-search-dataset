@@ -43,7 +43,7 @@ class BM25Helper:
 
         return processed_corpus
 
-    def get_negative_samples(self, query: str,  n: int) -> list:
+    def get_negative_samples(self, query: str,  n: int, existing_negative_samples: list = []) -> list:
         """
         Given a query, this function returns a sample of n responses from the top 1000 potential responses obtained
         by applying BM25
@@ -62,7 +62,7 @@ class BM25Helper:
 
         while len(unique_responses) < n:
             candidate_element = np.random.choice(top_queries, 1)[0]
-            if candidate_element not in unique_responses:
+            if candidate_element not in unique_responses and candidate_element not in existing_negative_samples:
                 unique_responses.append(candidate_element)
 
         return unique_responses

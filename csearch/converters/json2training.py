@@ -174,18 +174,20 @@ class WebJson2Training(JSON2Training):
                 continue
 
             true_documents = [self.url_mapping[url]['text'].replace('\n', '.').replace('\r', '.') for url in true_answer_urls]
+            negative_samples = []
 
             for true_document in true_documents:
-                self.process_url(training_entry, true_documents, key, true_document)
+                negative_samples += self.process_url(training_entry, true_documents, negative_samples, key, true_document)
 
-    def process_url(self, training_entry: list, true_documents: list, key: str, true_document: str) -> None:
+    def process_url(self, training_entry: list, true_documents: list, negative_samples: list, key: str, true_document: str) -> list:
         url_training_entry = training_entry + [true_document]
 
         self.dialog_lookup_table.append(int(key))
         self.training_set.append(url_training_entry)
 
         negative_training_entry = ([0] + training_entry[1:])
-        top_responses = self.bm25_helper.get_negative_samples(true_document, 50 + len(true_documents))
+        top_responses = self.bm25_helper.get_negative_samples(true_document, 50 + len(true_documents),
+                                                              existing_negative_samples=negative_samples)
 
         top_responses_without_true_documents = list(
             filter(lambda response: response not in true_documents, top_responses)
@@ -196,6 +198,8 @@ class WebJson2Training(JSON2Training):
         for top_response in top_responses_without_true_documents:
             self.dialog_lookup_table.append(int(key))
             self.training_set.append(negative_training_entry + [top_response])
+
+        return top_responses_without_true_documents
 
 
 class WebJson2EasyTraining(JSON2Training):
