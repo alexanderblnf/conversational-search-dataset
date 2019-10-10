@@ -76,10 +76,11 @@ class JSON2Training:
         print('Converting the json to training set')
         with tqdm(total=len(self.json_data)) as pbar:
             for (key, dialogue) in self.json_data.items():
-                if int(key) % progress_increment == 0:
-                    self.write_and_clear_training()
+                if len(self.json_data) < 30000 or int(key) > 39332:
+                    if int(key) % progress_increment == 0:
+                        self.write_and_clear_training()
 
-                self.process_dialogue(key, dialogue)
+                    self.process_dialogue(key, dialogue)
                 pbar.update(1)
 
         self.write_and_clear_training()
