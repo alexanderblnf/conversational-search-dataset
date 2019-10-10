@@ -71,7 +71,7 @@ class JSON2Training:
         :return:
         """
         dataset_size = len(self.json_data.keys())
-        progress_increment = floor(dataset_size / 20)
+        progress_increment = floor(dataset_size / 50)
 
         print('Converting the json to training set')
         with tqdm(total=len(self.json_data)) as pbar:
