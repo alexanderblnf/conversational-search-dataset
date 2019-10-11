@@ -71,12 +71,12 @@ class JSON2Training:
         :return:
         """
         dataset_size = len(self.json_data.keys())
-        progress_increment = floor(dataset_size / 50)
+        progress_increment = floor(dataset_size / 100)
 
         print('Converting the json to training set')
         with tqdm(total=len(self.json_data)) as pbar:
             for (key, dialogue) in self.json_data.items():
-                if len(self.json_data) < 30000 or int(key) > 39332:
+                if len(self.json_data) < 30000 or int(key) > 40459:
                     if int(key) % progress_increment == 0:
                         self.write_and_clear_training()
 
