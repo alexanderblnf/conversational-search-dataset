@@ -64,7 +64,7 @@ def generate_intent_mtl_training_from_training_set(dataset_location: str, traini
             dataset_data = json.load(dataset_f)
 
         lookup_data = []
-        training_lookup_file = training_lookup_location + '/data_' + allocation + '_lookup.txt'
+        training_lookup_file = training_lookup_location + '/data_' + allocation + '_web_hard_lookup.txt'
         training_lookup_files[allocation] = training_lookup_file
 
         with open(training_lookup_file, 'r') as training_lookup_f:
