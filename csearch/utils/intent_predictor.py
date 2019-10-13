@@ -112,6 +112,7 @@ def custom_cv(clf, processed_ds, labels, num_iterations, random_state, tfidf_vec
             y_predicted = clf.fit(x_train, y_train).predict(x_test)
             y_t = label_encoder.inverse_transform(y_test)
             y_p = label_encoder.inverse_transform(y_predicted)
+            all
             custom_accuracy_avg.append(custom_accuracy(y_t, y_p))
             f1_micro.append(f1_score(y_test, y_predicted, average='micro'))
             f1_macro.append(f1_score(y_test, y_predicted, average='macro'))
