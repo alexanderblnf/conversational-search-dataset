@@ -1,6 +1,10 @@
 # conversational-search-dataset
 ##### This repo contains the implementation for obtaining a conversational search dataset
 
+## [Official GitHub page](https://alexanderblnf.github.io/conversational-search-dataset/)
+- Contains Google Drive links towards all the obtained datasets
+
+## Using the framework
 #### Fetching the .xml files for each stackExchange site
 To fetch the initial [stackExchange dump](https://archive.org/details/stackexchange),
 you need to run the `fetch_stackexchange_dump.sh` script. This will create a folder
